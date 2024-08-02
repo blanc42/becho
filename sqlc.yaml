@@ -1,0 +1,27 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "./pkg/db/query/"
+    schema: "./pkg/db/migration/"
+    gen:
+      go:
+        package: "db"
+        out: "./pkg/db/sqlc"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_exact_table_names: false
+        overrides:
+          - db_type: "jsonb"
+            nullable: true
+            engine: "postgresql"
+            go_type:
+              import: "encoding/json"
+              type: "RawMessage"
+          - db_type: "products.product_items"
+            nullable: false
+            engine: "postgresql"
+            go_type:
+              import: "github.com/blanc42/becho/pkg/db/sqlc"
+              type: "[]ProductItem"
