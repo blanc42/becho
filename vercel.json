@@ -1,8 +1,7 @@
 {
     "functions": {
       "api/index.go": {
-        "includeFiles": "**/*",
-        "excludeFiles": "node_modules"
+        "includeFiles": "pkg/**/*,go.mod"
       }
     },
     "rewrites": [
