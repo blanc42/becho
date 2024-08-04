@@ -23,6 +23,14 @@ RETURNING *;
 DELETE FROM users
 WHERE id = $1;
 
+-- name: GetUserByEmail :one
+SELECT * FROM users
+WHERE email = $1 LIMIT 1;
+
+-- name: GetUserByUsername :one
+SELECT * FROM users
+WHERE username = $1 LIMIT 1;
+
 -- Stores
 -- name: CreateStore :one
 INSERT INTO stores (id, created_at, updated_at, name, description, user_id)
@@ -56,23 +64,22 @@ RETURNING *;
 
 -- name: GetCategory :one
 SELECT * FROM categories
-WHERE id = $1 LIMIT 1;
+WHERE id = $1  LIMIT 1;
 
 -- name: ListCategories :many
 SELECT * FROM categories
 WHERE store_id = $1
-ORDER BY created_at
-LIMIT $2 OFFSET $3;
+ORDER BY created_at;
 
 -- name: UpdateCategory :one
 UPDATE categories
 SET name = $2, description = $3, parent_category_id = $4, variants = $5, updated_at = $6
-WHERE id = $1
+WHERE id = $1 AND store_id = $7
 RETURNING *;
 
 -- name: DeleteCategory :exec
 DELETE FROM categories
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- Variants
 -- name: CreateVariant :one
@@ -87,71 +94,23 @@ WHERE id = $1 LIMIT 1;
 -- name: ListVariants :many
 SELECT * FROM variants
 WHERE store_id = $1
-ORDER BY created_at
-LIMIT $2 OFFSET $3;
+ORDER BY created_at;
 
 -- name: UpdateVariant :one
 UPDATE variants
 SET name = $2, description = $3, options = $4, updated_at = $5
-WHERE id = $1
+WHERE id = $1 AND store_id = $6
 RETURNING *;
 
 -- name: DeleteVariant :exec
 DELETE FROM variants
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- Products
 -- name: CreateProduct :one
 INSERT INTO products (id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 RETURNING *;
-
--- name: GetProduct :one
-SELECT * FROM products
-WHERE id = $1 LIMIT 1;
-
--- name: ListProducts :many
-SELECT * FROM products
-WHERE store_id = $1
-ORDER BY created_at
-LIMIT $2 OFFSET $3;
-
--- name: GetProductWithVariants :one
--- SELECT p.*,
---        (SELECT json_agg(json_build_object(
---         'id', v.id,
---         'sku', v.sku,
---         'quantity', v.quantity,
---         'price', v.price,
---         'discounted_price', v.discounted_price,
---         'cost_price', v.cost_price,
---         'options', v.options
---        ))
---         FROM product_items v
---         WHERE v.product_id = p.id) AS product_items
--- FROM products p
--- WHERE p.id = $1;
-
--- name: GetProductWithVariants :one
--- SELECT p.*,
---        COALESCE(
---            jsonb_agg(
---                jsonb_build_object(
---                    'id', v.id,
---                    'sku', v.sku,
---                    'quantity', v.quantity,
---                    'price', v.price,
---                    'discounted_price', v.discounted_price,
---                    'cost_price', v.cost_price,
---                    'options', v.options
---                )
---            ) FILTER (WHERE v.id IS NOT NULL),
---            '[]'::jsonb
---        ) AS product_items
--- FROM products p
--- LEFT JOIN product_items v ON v.product_id = p.id
--- WHERE p.id = $1
--- GROUP BY p.id;
 
 -- name: GetProduct :one
 SELECT p.*,
@@ -171,9 +130,21 @@ LEFT JOIN product_items pi ON p.id = pi.product_id
 WHERE p.id = $1
 GROUP BY p.id;
 
+
 -- name: GetProducts :many
+WITH product_price_info AS (
+    SELECT p.id,
+           MIN(pi.price) AS min_price
+    FROM products p
+    LEFT JOIN product_items pi ON p.id = pi.product_id
+    GROUP BY p.id
+),
+variant_filters AS (
+    SELECT jsonb_object_keys(sqlc.narg('variants')::jsonb) AS variant_name,
+           jsonb_array_elements_text(sqlc.narg('variants')::jsonb->jsonb_object_keys(sqlc.narg('variants')::jsonb)) AS variant_value
+)
 SELECT p.*,
-       json_agg(json_build_object(
+       COALESCE(json_agg(json_build_object(
            'id', pi.id,
            'sku', pi.sku,
            'quantity', pi.quantity,
@@ -181,24 +152,48 @@ SELECT p.*,
            'discounted_price', pi.discounted_price,
            'cost_price', pi.cost_price,
            'options', pi.options
-       )) AS product_items
+       )) FILTER (WHERE pi.id IS NOT NULL), '[]'::json) AS product_items,
+       ppi.min_price
 FROM products p
 LEFT JOIN product_items pi ON p.id = pi.product_id
-WHERE p.store_id = $1
-GROUP BY p.id
-ORDER BY p.created_at
-LIMIT $2 OFFSET $3;
+JOIN product_price_info ppi ON p.id = ppi.id
+WHERE p.store_id = sqlc.narg('store_id')
+    AND (sqlc.narg('category_id')::text IS NULL OR p.category_id = sqlc.narg('category_id'))
+    AND (sqlc.narg('is_featured')::boolean IS NULL OR p.is_featured = sqlc.narg('is_featured'))
+    AND (sqlc.narg('is_archived')::boolean IS NULL OR p.is_archived = sqlc.narg('is_archived'))
+    AND (sqlc.narg('min_price')::decimal IS NULL OR ppi.min_price >= sqlc.narg('min_price'))
+    AND (sqlc.narg('max_price')::decimal IS NULL OR ppi.min_price <= sqlc.narg('max_price'))
+    AND (sqlc.narg('search')::text IS NULL OR p.name ILIKE '%' || sqlc.narg('search') || '%' OR p.description ILIKE '%' || sqlc.narg('search') || '%')
+    AND (
+        sqlc.narg('variants')::jsonb IS NULL
+        OR EXISTS (
+            SELECT 1
+            FROM product_items sub_pi
+            WHERE sub_pi.product_id = p.id
+            AND (
+                SELECT bool_and(
+                    sub_pi.options ->> vf.variant_name IN (
+                        SELECT jsonb_array_elements_text(sqlc.narg('variants')::jsonb->vf.variant_name)
+                    )
+                )
+                FROM variant_filters vf
+            )
+        )
+    )
+GROUP BY p.id, ppi.min_price
+LIMIT COALESCE(sqlc.narg('limit')::integer, 10)
+OFFSET COALESCE(sqlc.narg('offset')::integer, 0);
 
 
 -- name: UpdateProduct :one
 UPDATE products
 SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, category_name = $9, variants = $10, updated_at = $11
-WHERE id = $1
+WHERE id = $1 AND store_id = $12
 RETURNING *;
 
 -- name: DeleteProduct :exec
 DELETE FROM products
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- Product Items
 -- name: CreateProductItem :one

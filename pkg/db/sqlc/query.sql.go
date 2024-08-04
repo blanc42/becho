@@ -579,11 +579,16 @@ func (q *Queries) DeleteCartItem(ctx context.Context, id string) error {
 
 const deleteCategory = `-- name: DeleteCategory :exec
 DELETE FROM categories
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteCategory(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteCategory, id)
+type DeleteCategoryParams struct {
+	ID      string `json:"id"`
+	StoreID string `json:"store_id"`
+}
+
+func (q *Queries) DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error {
+	_, err := q.db.Exec(ctx, deleteCategory, arg.ID, arg.StoreID)
 	return err
 }
 
@@ -619,11 +624,16 @@ func (q *Queries) DeleteOrderItem(ctx context.Context, id string) error {
 
 const deleteProduct = `-- name: DeleteProduct :exec
 DELETE FROM products
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteProduct(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteProduct, id)
+type DeleteProductParams struct {
+	ID      string `json:"id"`
+	StoreID string `json:"store_id"`
+}
+
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) error {
+	_, err := q.db.Exec(ctx, deleteProduct, arg.ID, arg.StoreID)
 	return err
 }
 
@@ -669,11 +679,16 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 
 const deleteVariant = `-- name: DeleteVariant :exec
 DELETE FROM variants
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteVariant(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteVariant, id)
+type DeleteVariantParams struct {
+	ID      string `json:"id"`
+	StoreID string `json:"store_id"`
+}
+
+func (q *Queries) DeleteVariant(ctx context.Context, arg DeleteVariantParams) error {
+	_, err := q.db.Exec(ctx, deleteVariant, arg.ID, arg.StoreID)
 	return err
 }
 
@@ -759,7 +774,7 @@ func (q *Queries) GetCartItem(ctx context.Context, id string) (CartItem, error) 
 
 const getCategory = `-- name: GetCategory :one
 SELECT id, created_at, updated_at, name, description, store_id, parent_category_id, variants FROM categories
-WHERE id = $1 LIMIT 1
+WHERE id = $1  LIMIT 1
 `
 
 func (q *Queries) GetCategory(ctx context.Context, id string) (Category, error) {
@@ -836,13 +851,44 @@ func (q *Queries) GetOrderItem(ctx context.Context, id string) (OrderItem, error
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants FROM products
-WHERE id = $1 LIMIT 1
+SELECT p.id, p.created_at, p.updated_at, p.name, p.description, p.rating, p.is_featured, p.is_archived, p.has_variants, p.category_id, p.store_id, p.category_name, p.variants,
+       COALESCE(
+       json_agg(json_build_object(
+           'id', pi.id,
+           'sku', pi.sku,
+           'quantity', pi.quantity,
+           'price', pi.price,
+           'discounted_price', pi.discounted_price,
+           'cost_price', pi.cost_price,
+           'options', pi.options
+       )) ,'[]'::json
+       ) AS product_items
+FROM products p
+LEFT JOIN product_items pi ON p.id = pi.product_id
+WHERE p.id = $1
+GROUP BY p.id
 `
 
-func (q *Queries) GetProduct(ctx context.Context, id string) (Product, error) {
+type GetProductRow struct {
+	ID           string           `json:"id"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+	Name         string           `json:"name"`
+	Description  pgtype.Text      `json:"description"`
+	Rating       pgtype.Float8    `json:"rating"`
+	IsFeatured   pgtype.Bool      `json:"is_featured"`
+	IsArchived   pgtype.Bool      `json:"is_archived"`
+	HasVariants  pgtype.Bool      `json:"has_variants"`
+	CategoryID   string           `json:"category_id"`
+	StoreID      string           `json:"store_id"`
+	CategoryName string           `json:"category_name"`
+	Variants     json.RawMessage  `json:"variants"`
+	ProductItems interface{}      `json:"product_items"`
+}
+
+func (q *Queries) GetProduct(ctx context.Context, id string) (GetProductRow, error) {
 	row := q.db.QueryRow(ctx, getProduct, id)
-	var i Product
+	var i GetProductRow
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
@@ -857,6 +903,7 @@ func (q *Queries) GetProduct(ctx context.Context, id string) (Product, error) {
 		&i.StoreID,
 		&i.CategoryName,
 		&i.Variants,
+		&i.ProductItems,
 	)
 	return i, err
 }
@@ -902,106 +949,20 @@ func (q *Queries) GetProductItem(ctx context.Context, id string) (ProductItem, e
 	return i, err
 }
 
-const getProductWithVariants = `-- name: GetProductWithVariants :one
-
-
-SELECT p.id, p.created_at, p.updated_at, p.name, p.description, p.rating, p.is_featured, p.is_archived, p.has_variants, p.category_id, p.store_id, p.category_name, p.variants,
-       COALESCE(
-       json_agg(json_build_object(
-           'id', pi.id,
-           'sku', pi.sku,
-           'quantity', pi.quantity,
-           'price', pi.price,
-           'discounted_price', pi.discounted_price,
-           'cost_price', pi.cost_price,
-           'options', pi.options
-       )) ,'[]'::json
-       ) AS product_items
-FROM products p
-LEFT JOIN product_items pi ON p.id = pi.product_id
-WHERE p.id = $1
-GROUP BY p.id
-`
-
-type GetProductWithVariantsRow struct {
-	ID           string           `json:"id"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	Name         string           `json:"name"`
-	Description  pgtype.Text      `json:"description"`
-	Rating       pgtype.Float8    `json:"rating"`
-	IsFeatured   pgtype.Bool      `json:"is_featured"`
-	IsArchived   pgtype.Bool      `json:"is_archived"`
-	HasVariants  pgtype.Bool      `json:"has_variants"`
-	CategoryID   string           `json:"category_id"`
-	StoreID      string           `json:"store_id"`
-	CategoryName string           `json:"category_name"`
-	Variants     json.RawMessage  `json:"variants"`
-	ProductItems interface{}      `json:"product_items"`
-}
-
-// SELECT p.*,
-//
-//	(SELECT json_agg(json_build_object(
-//	 'id', v.id,
-//	 'sku', v.sku,
-//	 'quantity', v.quantity,
-//	 'price', v.price,
-//	 'discounted_price', v.discounted_price,
-//	 'cost_price', v.cost_price,
-//	 'options', v.options
-//	))
-//	 FROM product_items v
-//	 WHERE v.product_id = p.id) AS product_items
-//
-// FROM products p
-// WHERE p.id = $1;
-// SELECT p.*,
-//
-//	COALESCE(
-//	    jsonb_agg(
-//	        jsonb_build_object(
-//	            'id', v.id,
-//	            'sku', v.sku,
-//	            'quantity', v.quantity,
-//	            'price', v.price,
-//	            'discounted_price', v.discounted_price,
-//	            'cost_price', v.cost_price,
-//	            'options', v.options
-//	        )
-//	    ) FILTER (WHERE v.id IS NOT NULL),
-//	    '[]'::jsonb
-//	) AS product_items
-//
-// FROM products p
-// LEFT JOIN product_items v ON v.product_id = p.id
-// WHERE p.id = $1
-// GROUP BY p.id;
-func (q *Queries) GetProductWithVariants(ctx context.Context, id string) (GetProductWithVariantsRow, error) {
-	row := q.db.QueryRow(ctx, getProductWithVariants, id)
-	var i GetProductWithVariantsRow
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Name,
-		&i.Description,
-		&i.Rating,
-		&i.IsFeatured,
-		&i.IsArchived,
-		&i.HasVariants,
-		&i.CategoryID,
-		&i.StoreID,
-		&i.CategoryName,
-		&i.Variants,
-		&i.ProductItems,
-	)
-	return i, err
-}
-
 const getProducts = `-- name: GetProducts :many
+WITH product_price_info AS (
+    SELECT p.id,
+           MIN(pi.price) AS min_price
+    FROM products p
+    LEFT JOIN product_items pi ON p.id = pi.product_id
+    GROUP BY p.id
+),
+variant_filters AS (
+    SELECT jsonb_object_keys($8::jsonb) AS variant_name,
+           jsonb_array_elements_text($8::jsonb->jsonb_object_keys($8::jsonb)) AS variant_value
+)
 SELECT p.id, p.created_at, p.updated_at, p.name, p.description, p.rating, p.is_featured, p.is_archived, p.has_variants, p.category_id, p.store_id, p.category_name, p.variants,
-       json_agg(json_build_object(
+       COALESCE(json_agg(json_build_object(
            'id', pi.id,
            'sku', pi.sku,
            'quantity', pi.quantity,
@@ -1009,19 +970,50 @@ SELECT p.id, p.created_at, p.updated_at, p.name, p.description, p.rating, p.is_f
            'discounted_price', pi.discounted_price,
            'cost_price', pi.cost_price,
            'options', pi.options
-       )) AS product_items
+       )) FILTER (WHERE pi.id IS NOT NULL), '[]'::json) AS product_items,
+       ppi.min_price
 FROM products p
 LEFT JOIN product_items pi ON p.id = pi.product_id
+JOIN product_price_info ppi ON p.id = ppi.id
 WHERE p.store_id = $1
-GROUP BY p.id
-ORDER BY p.created_at
-LIMIT $2 OFFSET $3
+    AND ($2::text IS NULL OR p.category_id = $2)
+    AND ($3::boolean IS NULL OR p.is_featured = $3)
+    AND ($4::boolean IS NULL OR p.is_archived = $4)
+    AND ($5::decimal IS NULL OR ppi.min_price >= $5)
+    AND ($6::decimal IS NULL OR ppi.min_price <= $6)
+    AND ($7::text IS NULL OR p.name ILIKE '%' || $7 || '%' OR p.description ILIKE '%' || $7 || '%')
+    AND (
+        $8::jsonb IS NULL
+        OR EXISTS (
+            SELECT 1
+            FROM product_items sub_pi
+            WHERE sub_pi.product_id = p.id
+            AND (
+                SELECT bool_and(
+                    sub_pi.options ->> vf.variant_name IN (
+                        SELECT jsonb_array_elements_text($8::jsonb->vf.variant_name)
+                    )
+                )
+                FROM variant_filters vf
+            )
+        )
+    )
+GROUP BY p.id, ppi.min_price
+LIMIT COALESCE($10::integer, 10)
+OFFSET COALESCE($9::integer, 0)
 `
 
 type GetProductsParams struct {
-	StoreID string `json:"store_id"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	StoreID    pgtype.Text     `json:"store_id"`
+	CategoryID pgtype.Text     `json:"category_id"`
+	IsFeatured pgtype.Bool     `json:"is_featured"`
+	IsArchived pgtype.Bool     `json:"is_archived"`
+	MinPrice   pgtype.Numeric  `json:"min_price"`
+	MaxPrice   pgtype.Numeric  `json:"max_price"`
+	Search     pgtype.Text     `json:"search"`
+	Variants   json.RawMessage `json:"variants"`
+	Offset     pgtype.Int4     `json:"offset"`
+	Limit      pgtype.Int4     `json:"limit"`
 }
 
 type GetProductsRow struct {
@@ -1038,11 +1030,23 @@ type GetProductsRow struct {
 	StoreID      string           `json:"store_id"`
 	CategoryName string           `json:"category_name"`
 	Variants     json.RawMessage  `json:"variants"`
-	ProductItems []byte           `json:"product_items"`
+	ProductItems interface{}      `json:"product_items"`
+	MinPrice     interface{}      `json:"min_price"`
 }
 
 func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]GetProductsRow, error) {
-	rows, err := q.db.Query(ctx, getProducts, arg.StoreID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getProducts,
+		arg.StoreID,
+		arg.CategoryID,
+		arg.IsFeatured,
+		arg.IsArchived,
+		arg.MinPrice,
+		arg.MaxPrice,
+		arg.Search,
+		arg.Variants,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1065,6 +1069,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 			&i.CategoryName,
 			&i.Variants,
 			&i.ProductItems,
+			&i.MinPrice,
 		); err != nil {
 			return nil, err
 		}
@@ -1102,6 +1107,48 @@ WHERE id = $1 LIMIT 1
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Role,
+		&i.StoreID,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, created_at, updated_at, username, email, password, role, store_id FROM users
+WHERE email = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Role,
+		&i.StoreID,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, created_at, updated_at, username, email, password, role, store_id FROM users
+WHERE username = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -1222,17 +1269,10 @@ const listCategories = `-- name: ListCategories :many
 SELECT id, created_at, updated_at, name, description, store_id, parent_category_id, variants FROM categories
 WHERE store_id = $1
 ORDER BY created_at
-LIMIT $2 OFFSET $3
 `
 
-type ListCategoriesParams struct {
-	StoreID string `json:"store_id"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
-}
-
-func (q *Queries) ListCategories(ctx context.Context, arg ListCategoriesParams) ([]Category, error) {
-	rows, err := q.db.Query(ctx, listCategories, arg.StoreID, arg.Limit, arg.Offset)
+func (q *Queries) ListCategories(ctx context.Context, storeID string) ([]Category, error) {
+	rows, err := q.db.Query(ctx, listCategories, storeID)
 	if err != nil {
 		return nil, err
 	}
@@ -1461,53 +1501,6 @@ func (q *Queries) ListProductItems(ctx context.Context, arg ListProductItemsPara
 	return items, nil
 }
 
-const listProducts = `-- name: ListProducts :many
-SELECT id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants FROM products
-WHERE store_id = $1
-ORDER BY created_at
-LIMIT $2 OFFSET $3
-`
-
-type ListProductsParams struct {
-	StoreID string `json:"store_id"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
-}
-
-func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, listProducts, arg.StoreID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Product
-	for rows.Next() {
-		var i Product
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Name,
-			&i.Description,
-			&i.Rating,
-			&i.IsFeatured,
-			&i.IsArchived,
-			&i.HasVariants,
-			&i.CategoryID,
-			&i.StoreID,
-			&i.CategoryName,
-			&i.Variants,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listStores = `-- name: ListStores :many
 SELECT id, created_at, updated_at, name, description, user_id FROM stores
 ORDER BY created_at
@@ -1590,17 +1583,10 @@ const listVariants = `-- name: ListVariants :many
 SELECT id, created_at, updated_at, name, description, options, store_id FROM variants
 WHERE store_id = $1
 ORDER BY created_at
-LIMIT $2 OFFSET $3
 `
 
-type ListVariantsParams struct {
-	StoreID string `json:"store_id"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
-}
-
-func (q *Queries) ListVariants(ctx context.Context, arg ListVariantsParams) ([]Variant, error) {
-	rows, err := q.db.Query(ctx, listVariants, arg.StoreID, arg.Limit, arg.Offset)
+func (q *Queries) ListVariants(ctx context.Context, storeID string) ([]Variant, error) {
+	rows, err := q.db.Query(ctx, listVariants, storeID)
 	if err != nil {
 		return nil, err
 	}
@@ -1734,7 +1720,7 @@ func (q *Queries) UpdateCartItem(ctx context.Context, arg UpdateCartItemParams) 
 const updateCategory = `-- name: UpdateCategory :one
 UPDATE categories
 SET name = $2, description = $3, parent_category_id = $4, variants = $5, updated_at = $6
-WHERE id = $1
+WHERE id = $1 AND store_id = $7
 RETURNING id, created_at, updated_at, name, description, store_id, parent_category_id, variants
 `
 
@@ -1745,6 +1731,7 @@ type UpdateCategoryParams struct {
 	ParentCategoryID pgtype.Text      `json:"parent_category_id"`
 	Variants         json.RawMessage  `json:"variants"`
 	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	StoreID          string           `json:"store_id"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error) {
@@ -1755,6 +1742,7 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		arg.ParentCategoryID,
 		arg.Variants,
 		arg.UpdatedAt,
+		arg.StoreID,
 	)
 	var i Category
 	err := row.Scan(
@@ -1860,7 +1848,7 @@ func (q *Queries) UpdateOrderItem(ctx context.Context, arg UpdateOrderItemParams
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, category_name = $9, variants = $10, updated_at = $11
-WHERE id = $1
+WHERE id = $1 AND store_id = $12
 RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants
 `
 
@@ -1876,6 +1864,7 @@ type UpdateProductParams struct {
 	CategoryName string           `json:"category_name"`
 	Variants     json.RawMessage  `json:"variants"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+	StoreID      string           `json:"store_id"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -1891,6 +1880,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.CategoryName,
 		arg.Variants,
 		arg.UpdatedAt,
+		arg.StoreID,
 	)
 	var i Product
 	err := row.Scan(
@@ -2059,7 +2049,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 const updateVariant = `-- name: UpdateVariant :one
 UPDATE variants
 SET name = $2, description = $3, options = $4, updated_at = $5
-WHERE id = $1
+WHERE id = $1 AND store_id = $6
 RETURNING id, created_at, updated_at, name, description, options, store_id
 `
 
@@ -2069,6 +2059,7 @@ type UpdateVariantParams struct {
 	Description pgtype.Text      `json:"description"`
 	Options     json.RawMessage  `json:"options"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	StoreID     string           `json:"store_id"`
 }
 
 func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (Variant, error) {
@@ -2078,6 +2069,7 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (V
 		arg.Description,
 		arg.Options,
 		arg.UpdatedAt,
+		arg.StoreID,
 	)
 	var i Variant
 	err := row.Scan(

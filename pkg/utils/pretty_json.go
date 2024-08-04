@@ -1,11 +1,15 @@
 package utils
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
-func PrettyPrintJSON(data interface{}) (string, error) {
+func PrettyPrintJSON(data interface{}) error {
 	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return "", err
+		return err
 	}
-	return string(jsonData), nil
+	fmt.Println(string(jsonData))
+	return nil
 }
