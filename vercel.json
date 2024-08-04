@@ -1,9 +1,12 @@
 {
     "functions": {
       "api/index.go": {
-        "includeFiles": "pkg/**/*,go.mod"
-      }
+        "includeFiles": "pkg/**/*,go.mod,go.sum"
+      },
+      "excludeFiles" : "node_modules",
+      "includeFiles" : "pkg/**/*,go.mod,go.sum"
     },
+    
     "rewrites": [
       {
         "source": "/:path(api/.*)",
