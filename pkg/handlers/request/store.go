@@ -3,7 +3,6 @@ package request
 type CreateStoreRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
-	UserID      string `json:"user_id" binding:"required"`
 }
 
 type UpdateStoreRequest struct {

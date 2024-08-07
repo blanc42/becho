@@ -28,7 +28,7 @@ func NewUserHandler(userUsecase usecase.UserUsecase) UserHandler {
 }
 
 func (h *userHandler) CreateAdminUser(c *gin.Context) {
-	var req request.CreateUserRequest
+	var req request.CreateAdminRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

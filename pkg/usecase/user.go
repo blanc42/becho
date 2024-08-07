@@ -19,7 +19,7 @@ type UserUsecase interface {
 	DeleteUser(ctx context.Context, id string) error
 	ListUsers(ctx context.Context, limit, offset int32) ([]db.User, error)
 	AuthenticateUser(ctx context.Context, email, password string) (db.User, error)
-	CreateAdminUser(ctx context.Context, user_request request.CreateUserRequest) (string, error)
+	CreateAdminUser(ctx context.Context, user_request request.CreateAdminRequest) (string, error)
 }
 
 type userUseCase struct {
@@ -30,7 +30,7 @@ func NewUserUseCase(userRepo domain.UserRepository) UserUsecase {
 	return &userUseCase{userRepo: userRepo}
 }
 
-func (u *userUseCase) CreateAdminUser(ctx context.Context, user_request request.CreateUserRequest) (string, error) {
+func (u *userUseCase) CreateAdminUser(ctx context.Context, user_request request.CreateAdminRequest) (string, error) {
 	id, err := utils.GenerateShortID()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate ID: %w", err)

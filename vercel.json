@@ -1,14 +1,18 @@
 {
   "functions": {
     "api/index.go": {
-      "includeFiles": "pkg/**/*,go.mod,go.sum",
-      "excludeFiles": "node_modules"
+      "includeFiles": "**/*"
+    }
+  },
+  "build": {
+    "env": {
+      "GO_BUILD_FLAGS": "-ldflags '-s -w'"
     }
   },
   "rewrites": [
     {
       "source": "/:path(api/.*)",
-      "destination": "/api/index.go"
+      "destination": "/api"
     }
   ]
 }

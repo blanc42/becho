@@ -38,13 +38,17 @@ func (h *storeHandler) CreateStore(c *gin.Context) {
 		return
 	}
 
-	storeID, err := h.storeUsecase.CreateStore(c, userID.(string), req)
+	store, err := h.storeUsecase.CreateStore(c, userID.(string), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"store_id": storeID})
+	c.JSON(http.StatusCreated, gin.H{
+		"data":    store,
+		"message": nil,
+		"error":   nil,
+	})
 }
 
 func (h *storeHandler) GetStore(c *gin.Context) {

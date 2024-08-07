@@ -13,7 +13,7 @@ import (
 )
 
 type StoreUsecase interface {
-	CreateStore(ctx context.Context, userID string, storeRequest request.CreateStoreRequest) (string, error)
+	CreateStore(ctx context.Context, userID string, storeRequest request.CreateStoreRequest) (db.Store, error)
 	GetStore(ctx context.Context, id string) (db.Store, error)
 	UpdateStore(ctx context.Context, id string, storeRequest request.UpdateStoreRequest) (db.Store, error)
 	DeleteStore(ctx context.Context, id string) error
@@ -32,21 +32,17 @@ func NewStoreUseCase(storeRepo domain.StoreRepository, userRepo domain.UserRepos
 	}
 }
 
-func (s *storeUseCase) CreateStore(ctx context.Context, userID string, storeRequest request.CreateStoreRequest) (string, error) {
+func (s *storeUseCase) CreateStore(ctx context.Context, userID string, storeRequest request.CreateStoreRequest) (db.Store, error) {
 	// Check if the user is an admin
-	user, err := s.userRepo.GetUser(ctx, userID)
+	_, err := s.userRepo.GetUser(ctx, userID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get user: %w", err)
-	}
-
-	if user.Role != "admin" {
-		return "", fmt.Errorf("only admins can create stores")
+		return db.Store{}, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	// Generate a new ID for the store
 	id, err := utils.GenerateShortID()
 	if err != nil {
-		return "", fmt.Errorf("failed to generate store ID: %w", err)
+		return db.Store{}, fmt.Errorf("failed to generate store ID: %w", err)
 	}
 
 	// Create the store
@@ -61,10 +57,10 @@ func (s *storeUseCase) CreateStore(ctx context.Context, userID string, storeRequ
 
 	createdStore, err := s.storeRepo.CreateStore(ctx, newStore)
 	if err != nil {
-		return "", fmt.Errorf("failed to create store: %w", err)
+		return db.Store{}, fmt.Errorf("failed to create store: %w", err)
 	}
 
-	return createdStore.ID, nil
+	return createdStore, nil
 }
 
 // TODO : return storeResponse and not db.Store
