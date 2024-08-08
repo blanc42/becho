@@ -66,9 +66,11 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 	admin := protected.Group("/")
 	admin.Use(middleware.AdminMiddleware())
 	{
+		admin.GET("/user", u.GetUser)
+		admin.POST("/stores", s.CreateStore)
 		stores := admin.Group("/stores")
 		{
-			stores.POST("/", s.CreateStore)
+			// stores.POST("/", s.CreateStore)
 			stores.PUT("/:store_id", s.UpdateStore)
 			stores.DELETE("/:store_id", s.DeleteStore)
 			stores.GET("/", s.ListStores)

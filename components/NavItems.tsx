@@ -1,13 +1,14 @@
 import React from 'react'
 import Link from 'next/link'
+import { Button } from './ui/button'
 
 const NavItems = () => {
   return (
     <div className="flex flex-col gap-2 md:flex-row md:space-x-0 w-full">
-      <Link href="/dashboard" className="hover:text-primary text-lg text-center bg-neutral-100 rounded-md p-2">Dashboard</Link>
-      <Link href="/products" className="hover:text-primary text-lg text-center bg-neutral-100 rounded-md p-2">Products</Link>
-      <Link href="/categories" className="hover:text-primary text-lg text-center bg-neutral-100 rounded-md p-2">Categories</Link>
-      <Link href="/variants" className="hover:text-primary text-lg text-center bg-neutral-100 rounded-md p-2">Variants</Link>
+      <Link href="/dashboard" ><Button variant="link">Dashboard</Button></Link>
+      <Link href="/products" ><Button variant="link">Products</Button></Link>
+      <Link href="/categories" ><Button variant="link">Categories</Button></Link>
+      <Link href="/variants" ><Button variant="link">Variants</Button></Link>
     </div>
   )
 }

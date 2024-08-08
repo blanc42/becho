@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useStore } from '@/lib/store'
+import { useStore } from '@/lib/store/useStore'
 import CreateStoreModal from './CreateStoreModal'
 
 interface Store {
@@ -28,17 +28,21 @@ interface Store {
 const StoreSelector = () => {
   const [open, setOpen] = React.useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
-  const { stores, selectedStore, setSelectedStore } = useStore()
+  const { stores, selectedStore, setSelectedStore, fetchStores } = useStore()
 
   React.useEffect(() => {
-    const storedStoreId = localStorage.getItem('selectedStoreId')
-    if (storedStoreId) {
-      const store = stores.find(s => s.id === storedStoreId)
-      if (store) setSelectedStore(store)
+    const initializeStores = async () => {
+      await fetchStores()
     }
+    initializeStores()
   }, [])
 
+  React.useEffect(() => {
+    console.log('Selected Store Updated:', selectedStore)
+  }, [selectedStore])
+
   const handleStoreSelect = (storeId: string) => {
+    console.log('Selecting store with ID:', storeId)
     const store = stores.find(s => s.id === storeId)
     if (store) {
       setSelectedStore(store)
@@ -51,6 +55,8 @@ const StoreSelector = () => {
     setOpen(false)
     setIsCreateModalOpen(true)
   }
+
+  console.log('Rendering with Selected Store:', selectedStore)
 
   return (
     <>
@@ -67,16 +73,17 @@ const StoreSelector = () => {
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0">
-          <Command>
+          <Command value={selectedStore?.id}>
             <CommandInput placeholder="Search store..." />
             <CommandList>
               <CommandEmpty>No store found.</CommandEmpty>
               <CommandGroup>
                 {stores.map((store) => (
                   <CommandItem
+
                     key={store.id}
                     value={store.id}
-                    onSelect={handleStoreSelect}
+                    onSelect={() => handleStoreSelect(store.id)}
                   >
                     <Check
                       className={cn(

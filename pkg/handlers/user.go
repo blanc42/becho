@@ -83,9 +83,13 @@ func (h *userHandler) Login(c *gin.Context) {
 }
 
 func (h *userHandler) GetUser(c *gin.Context) {
-	userID := c.Param("id")
+	userID, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
 
-	user, err := h.userUsecase.GetUser(c, userID)
+	user, err := h.userUsecase.GetUser(c, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
