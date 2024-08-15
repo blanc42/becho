@@ -8,6 +8,7 @@ interface Store {
 interface StoreState {
   stores: Store[]
   selectedStore: Store | null
+  setStores: (stores: Store[]) => void
   setSelectedStore: (store: Store) => void
   createStore: (store: Store) => Promise<void>
   addStore: (store: Store) => void
@@ -16,6 +17,21 @@ interface StoreState {
 
 export const useStore = create<StoreState>((set) => ({
   stores: [],
+  setStores: (stores) => {
+    set({ stores })
+    if (stores.length > 0) {
+      console.log('stores', stores)
+      const storedStoreId = localStorage.getItem('selectedStoreId')
+      const selectedStore = storedStoreId 
+        ? stores.find(store => store.id === storedStoreId) 
+        : stores[0]
+      if (selectedStore) {
+        console.log("I am running inside the if selected store logic")
+        set({ selectedStore })
+        localStorage.setItem('selectedStoreId', selectedStore.id)
+      }
+    }
+  },
   selectedStore: null,
   setSelectedStore: (store) => set({ selectedStore: store }),
   createStore: async (store) => {

@@ -12,7 +12,7 @@ type UserRepository interface {
 	GetUser(ctx context.Context, id string) (db.User, error)
 	UpdateUser(ctx context.Context, arg db.UpdateUserParams) (db.User, error)
 	DeleteUser(ctx context.Context, id string) error
-	ListUsers(ctx context.Context, arg db.ListUsersParams) ([]db.User, error)
+	ListUsers(ctx context.Context, arg db.ListUsersForStoreParams) ([]db.User, error)
 	GetUserByEmail(ctx context.Context, email string) (db.User, error)
 }
 
@@ -46,8 +46,8 @@ func (ur *userRepository) DeleteUser(ctx context.Context, id string) error {
 	return ur.db.DeleteUser(ctx, id)
 }
 
-func (ur *userRepository) ListUsers(ctx context.Context, arg db.ListUsersParams) ([]db.User, error) {
-	return ur.db.ListUsers(ctx, arg)
+func (ur *userRepository) ListUsers(ctx context.Context, arg db.ListUsersForStoreParams) ([]db.User, error) {
+	return ur.db.ListUsersForStore(ctx, arg)
 }
 
 func (ur *userRepository) GetUserByEmail(ctx context.Context, email string) (db.User, error) {

@@ -45,13 +45,12 @@ func (c *categoryUseCase) CreateCategory(ctx context.Context, categoryRequest re
 	}
 
 	newCategory := db.CreateCategoryParams{
-		ID:               id,
-		CreatedAt:        pgtype.Timestamp{Time: time.Now(), Valid: true},
-		UpdatedAt:        pgtype.Timestamp{Time: time.Now(), Valid: true},
-		Name:             categoryRequest.Name,
-		Description:      pgtype.Text{String: categoryRequest.Description, Valid: true},
-		ParentCategoryID: pgtype.Text{String: categoryRequest.ParentID, Valid: categoryRequest.ParentID != ""},
-		StoreID:          categoryRequest.StoreID,
+		ID:          id,
+		CreatedAt:   pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt:   pgtype.Timestamp{Time: time.Now(), Valid: true},
+		Name:        categoryRequest.Name,
+		Description: pgtype.Text{String: categoryRequest.Description, Valid: true},
+		StoreID:     categoryRequest.StoreID,
 	}
 
 	createdCategory, err := c.categoryRepo.CreateCategory(ctx, newCategory)
@@ -93,11 +92,11 @@ func (c *categoryUseCase) UpdateCategory(ctx context.Context, id string, categor
 		updateParams.Description = existingCategory.Description
 	}
 
-	if categoryRequest.ParentID != nil {
-		updateParams.ParentCategoryID = pgtype.Text{String: *categoryRequest.ParentID, Valid: true}
-	} else {
-		updateParams.ParentCategoryID = existingCategory.ParentCategoryID
-	}
+	// if categoryRequest.ParentID != nil {
+	// 	updateParams.ParentCategoryID = pgtype.Text{String: *categoryRequest.ParentID, Valid: true}
+	// } else {
+	// 	updateParams.ParentCategoryID = existingCategory.ParentCategoryID
+	// }
 
 	updatedCategory, err := c.categoryRepo.UpdateCategory(ctx, updateParams)
 	if err != nil {

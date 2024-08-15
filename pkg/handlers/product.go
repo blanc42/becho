@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
+	db "github.com/blanc42/becho/pkg/db/sqlc"
 	"github.com/blanc42/becho/pkg/handlers/request"
 	"github.com/blanc42/becho/pkg/usecase"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ProductHandler interface {
@@ -72,7 +74,7 @@ func (h *productHandler) UpdateProduct(c *gin.Context) {
 }
 
 func (h *productHandler) GetProducts(c *gin.Context) {
-	storeID := c.Query("store_id")
+	storeID := c.Param("store_id")
 	if storeID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "store_id is required"})
 		return
@@ -93,7 +95,11 @@ func (h *productHandler) GetProducts(c *gin.Context) {
 		return
 	}
 
-	products, err := h.productUsecase.GetProducts(c, storeID, int32(limit), int32(offset))
+	products, err := h.productUsecase.GetProducts(c, db.GetFilteredProductsParams{
+		StoreID: pgtype.Text{String: storeID, Valid: true},
+		Limit:   pgtype.Int4{Int32: int32(limit), Valid: true},
+		Offset:  pgtype.Int4{Int32: int32(offset), Valid: true},
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

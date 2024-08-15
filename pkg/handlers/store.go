@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
+	db "github.com/blanc42/becho/pkg/db/sqlc"
 	"github.com/blanc42/becho/pkg/handlers/request"
 	"github.com/blanc42/becho/pkg/usecase"
 	"github.com/gin-gonic/gin"
@@ -94,26 +94,31 @@ func (h *storeHandler) DeleteStore(c *gin.Context) {
 }
 
 func (h *storeHandler) ListStores(c *gin.Context) {
-	limitStr := c.DefaultQuery("limit", "10")
-	offsetStr := c.DefaultQuery("offset", "0")
+	user_id := c.Value("user_id")
+	// limitStr := c.DefaultQuery("limit", "10")
+	// offsetStr := c.DefaultQuery("offset", "0")
 
-	limit, err := strconv.ParseInt(limitStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter"})
-		return
-	}
+	// limit, err := strconv.ParseInt(limitStr, 10, 32)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter"})
+	// 	return
+	// }
 
-	offset, err := strconv.ParseInt(offsetStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid offset parameter"})
-		return
-	}
+	// offset, err := strconv.ParseInt(offsetStr, 10, 32)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid offset parameter"})
+	// 	return
+	// }
 
-	stores, err := h.storeUsecase.ListStores(c, int32(limit), int32(offset))
+	stores, err := h.storeUsecase.ListStores(c, user_id.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if len(stores) == 0 {
+		c.JSON(http.StatusOK, gin.H{"data": []db.Store{}, "message": "No stores found"})
+		return
+	}
 
-	c.JSON(http.StatusOK, stores)
+	c.JSON(http.StatusOK, gin.H{"data": stores})
 }

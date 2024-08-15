@@ -29,7 +29,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	variantRepository := domain.NewVariantRepository(db.NewDbStore(initializers.DbConnection))
 	productRepository := domain.NewProductRepository(db.NewDbStore(initializers.DbConnection))
 
-	userHandler := handlers.NewUserHandler(usecase.NewUserUseCase(userRepository))
+	userHandler := handlers.NewUserHandler(usecase.NewUserUseCase(userRepository, storeRepository))
 	storeHandler := handlers.NewStoreHandler(usecase.NewStoreUseCase(storeRepository, userRepository))
 	categoryHandler := handlers.NewCategoryHandler(usecase.NewCategoryUseCase(categoryRepository, storeRepository))
 	variantHandler := handlers.NewVariantHandler(usecase.NewVariantUseCase(variantRepository, storeRepository))

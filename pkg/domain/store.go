@@ -11,7 +11,7 @@ type StoreRepository interface {
 	GetStore(ctx context.Context, store_id string) (db.Store, error)
 	UpdateStore(ctx context.Context, arg db.UpdateStoreParams) (db.Store, error)
 	DeleteStore(ctx context.Context, id string) error
-	ListStores(ctx context.Context, arg db.ListStoresParams) ([]db.Store, error)
+	ListStores(ctx context.Context, user_id string) ([]db.Store, error)
 }
 
 type storeRepository struct {
@@ -38,6 +38,6 @@ func (sr *storeRepository) DeleteStore(ctx context.Context, id string) error {
 	return sr.db.DeleteStore(ctx, id)
 }
 
-func (sr *storeRepository) ListStores(ctx context.Context, arg db.ListStoresParams) ([]db.Store, error) {
-	return sr.db.ListStores(ctx, arg)
+func (sr *storeRepository) ListStores(ctx context.Context, user_id string) ([]db.Store, error) {
+	return sr.db.ListStores(ctx, user_id)
 }

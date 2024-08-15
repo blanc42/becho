@@ -1,3 +1,10 @@
+-- Create an enum type for Role
+CREATE TYPE user_role AS ENUM ('customer', 'owner', 'admin');
+
+-- Add a comment to explain the enum
+COMMENT ON TYPE user_role IS 'Enum for user roles: customer, owner, or admin';
+
+
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(11) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
@@ -5,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL,
+    role user_role NOT NULL,
     store_id CHAR(11) NULL
 );
 
@@ -36,19 +43,18 @@ CREATE TABLE IF NOT EXISTS categories (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     store_id CHAR(11) NOT NULL,
-    parent_category_id CHAR(11),
+    parent_id CHAR(11),
     variants JSONB, -- in order
     CONSTRAINT fk_category_store
         FOREIGN KEY (store_id) 
         REFERENCES stores(id),
     CONSTRAINT fk_category_parent
-        FOREIGN KEY (parent_category_id) 
+        FOREIGN KEY (parent_id) 
         REFERENCES categories(id)
 );
 
 CREATE INDEX idx_category_name ON categories(name);
-CREATE INDEX idx_category_store_id ON categories(store_id);
-CREATE INDEX idx_category_parent_id ON categories(parent_category_id);
+CREATE INDEX idx_category_parent_id ON categories(parent_id);
 
 CREATE TABLE IF NOT EXISTS variants (
     id CHAR(11) PRIMARY KEY,
@@ -56,7 +62,6 @@ CREATE TABLE IF NOT EXISTS variants (
     updated_at TIMESTAMP NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    options JSONB,
     store_id CHAR(11) NOT NULL,
     CONSTRAINT fk_variant_store
         FOREIGN KEY (store_id) 
@@ -64,6 +69,28 @@ CREATE TABLE IF NOT EXISTS variants (
 );
 
 CREATE INDEX idx_variant_name ON variants(name);
+CREATE INDEX idx_variant_store_id ON variants(store_id);
+
+CREATE TABLE IF NOT EXISTS variant_options (
+    id CHAR(11) PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    variant_id CHAR(11) NOT NULL,
+    value VARCHAR(255) NOT NULL,
+    data VARCHAR(255),
+    image_id CHAR(11),
+    display_order INT NOT NULL,
+    CONSTRAINT fk_variant_option_variant
+        FOREIGN KEY (variant_id) 
+        REFERENCES variants(id),
+    CONSTRAINT fk_variant_option_image
+        FOREIGN KEY (image_id) 
+        REFERENCES images(id)
+);
+
+CREATE INDEX idx_variant_option_variant_id ON variant_options(variant_id);
+CREATE INDEX idx_variant_option_display_order ON variant_options(display_order);
+CREATE INDEX idx_variant_option_value ON variant_options(value);
 
 CREATE TABLE IF NOT EXISTS products (
     id CHAR(11) PRIMARY KEY,
@@ -78,7 +105,7 @@ CREATE TABLE IF NOT EXISTS products (
     category_id CHAR(11) NOT NULL,
     store_id CHAR(11) NOT NULL,
     category_name VARCHAR(255) NOT NULL,
-    variants JSONB,
+    variants JSONB, -- Array of variant IDs in order
     CONSTRAINT fk_product_category
         FOREIGN KEY (category_id) 
         REFERENCES categories(id),
@@ -88,12 +115,12 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 CREATE INDEX idx_product_name ON products(name);
-CREATE INDEX idx_product_is_featured ON products(is_featured);
-CREATE INDEX idx_product_is_archived ON products(is_archived);
 CREATE INDEX idx_product_category_id ON products(category_id);
+CREATE INDEX idx_product_is_featured ON products(is_featured);
+    CREATE INDEX idx_product_is_archived ON products(is_archived);
 CREATE INDEX idx_product_store_id ON products(store_id);
 
-CREATE TABLE IF NOT EXISTS product_items (
+CREATE TABLE IF NOT EXISTS product_variants (
     id CHAR(11) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
@@ -103,28 +130,38 @@ CREATE TABLE IF NOT EXISTS product_items (
     price FLOAT NOT NULL,
     discounted_price FLOAT, -- should be less than price
     cost_price FLOAT,
-    options JSONB, -- these are also in order of rendering
     CONSTRAINT fk_product_item_product
         FOREIGN KEY (product_id) 
         REFERENCES products(id)
 );
 
-CREATE UNIQUE INDEX idx_product_item_sku ON product_items(sku);
-CREATE INDEX idx_product_item_product_id ON product_items(product_id);
-CREATE INDEX idx_product_item_price ON product_items(price);
+CREATE INDEX idx_product_variants_product_id ON product_variants(product_id);
+CREATE INDEX idx_product_variants_sku ON product_variants(sku);
+CREATE INDEX idx_product_variants_price ON product_variants(price);
 
-CREATE TABLE IF NOT EXISTS product_images (
+CREATE TABLE product_variant_options (
+    product_variant_id CHAR(11),
+    variant_option_id CHAR(11),
+    PRIMARY KEY (product_variant_id, variant_option_id),
+    FOREIGN KEY (product_variant_id) REFERENCES product_variants(id),
+    FOREIGN KEY (variant_option_id) REFERENCES variant_options(id)
+);
+
+CREATE TABLE IF NOT EXISTS images (
     id CHAR(11) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    product_item_id CHAR(11) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    product_variant_id CHAR(11),
+    display_order INT NOT NULL,
     image_url VARCHAR(255) NOT NULL,
-    CONSTRAINT fk_product_image_product_item
-        FOREIGN KEY (product_item_id) 
-        REFERENCES product_items(id)
+    CONSTRAINT fk_product_image_product_variant
+        FOREIGN KEY (product_variant_id) 
+        REFERENCES product_variants(id)
 );
 
-CREATE INDEX idx_product_image_product_item_id ON product_images(product_item_id);
+CREATE INDEX idx_image_product_variant_id ON images(product_variant_id);
+CREATE INDEX idx_image_display_order ON images(display_order);
 
 CREATE TABLE IF NOT EXISTS orders (
     id CHAR(11) PRIMARY KEY,
@@ -158,7 +195,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     order_id CHAR(11) NOT NULL,
     CONSTRAINT fk_order_item_product_item
         FOREIGN KEY (product_item_id) 
-        REFERENCES product_items(id),
+        REFERENCES product_variants(id),
     CONSTRAINT fk_order_item_order
         FOREIGN KEY (order_id) 
         REFERENCES orders(id)
@@ -191,7 +228,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     cart_id CHAR(11) NOT NULL,
     CONSTRAINT fk_cart_item_product_item
         FOREIGN KEY (product_item_id) 
-        REFERENCES product_items(id),
+        REFERENCES product_variants(id),
     CONSTRAINT fk_cart_item_cart
         FOREIGN KEY (cart_id) 
         REFERENCES carts(id)

@@ -16,9 +16,9 @@ import (
 
 type ProductUsecase interface {
 	CreateProduct(ctx context.Context, req request.CreateProductRequest) (string, error)
-	GetProduct(ctx context.Context, id string, store_id string) (response.ProductResponse, error)
+	GetProduct(ctx context.Context, id string, store_id string) (db.GetProductRow, error)
 	UpdateProduct(ctx context.Context, id string, req request.UpdateProductRequest) (response.ProductResponse, error)
-	GetProducts(ctx context.Context, storeID string, limit, offset int32) ([]response.ProductResponse, error)
+	GetProducts(ctx context.Context, arg db.GetFilteredProductsParams) ([]db.GetFilteredProductsRow, error)
 }
 
 type productUseCase struct {
@@ -68,30 +68,41 @@ func (u *productUseCase) CreateProduct(ctx context.Context, req request.CreatePr
 	return product.ID, nil
 }
 
-func (u *productUseCase) GetProduct(ctx context.Context, id string, store_id string) (response.ProductResponse, error) {
-	product, err := u.productRepo.GetProduct(ctx, id)
+func (u *productUseCase) GetProduct(ctx context.Context, id string, store_id string) (db.GetProductRow, error) {
+	product, err := u.productRepo.GetProduct(ctx, db.GetProductParams{
+		ID:      id,
+		StoreID: store_id,
+	})
 	if err != nil {
-		return response.ProductResponse{}, fmt.Errorf("failed to get product: %w", err)
+		return db.GetProductRow{}, fmt.Errorf("failed to get product: %w", err)
 	}
 
-	var variants []response.Variant
-	err = json.Unmarshal(product.Variants, &variants)
-	if err != nil {
-		return response.ProductResponse{}, fmt.Errorf("failed to unmarshal variants: %w", err)
-	}
+	return product, nil
+	// var variants []response.Variant
+	// err = json.Unmarshal(product.Variants, &variants)
+	// if err != nil {
+	// 	return response.ProductResponse{}, fmt.Errorf("failed to unmarshal variants: %w", err)
+	// }
 
-	return response.ProductResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description.String,
-		CategoryID:  product.CategoryID,
-		StoreID:     product.StoreID,
-		Variants:    variants,
-	}, nil
+	// return response.ProductResponse{
+	// 	ID:          product.ID,
+	// 	Name:        product.Name,
+	// 	Description: product.Description.String,
+	// 	CategoryID:  product.CategoryID,
+	// 	StoreID:     product.StoreID,
+	// 	Variants:    variants,
+	// }, nil
 }
 
 func (u *productUseCase) UpdateProduct(ctx context.Context, id string, req request.UpdateProductRequest) (response.ProductResponse, error) {
-	existingProduct, err := u.productRepo.GetProduct(ctx, id)
+	store_id, ok := ctx.Value("store_id").(string)
+	if !ok {
+		return response.ProductResponse{}, fmt.Errorf("failed to get store ID")
+	}
+	existingProduct, err := u.productRepo.GetProduct(ctx, db.GetProductParams{
+		ID:      id,
+		StoreID: store_id,
+	})
 	if err != nil {
 		return response.ProductResponse{}, fmt.Errorf("failed to get product: %w", err)
 	}
@@ -105,13 +116,13 @@ func (u *productUseCase) UpdateProduct(ctx context.Context, id string, req reque
 	if req.Name != nil {
 		updateParams.Name = *req.Name
 	} else {
-		updateParams.Name = existingProduct.Name
+		updateParams.Name = existingProduct.ProductName
 	}
 
 	if req.Description != nil {
 		updateParams.Description = pgtype.Text{String: *req.Description, Valid: true}
 	} else {
-		updateParams.Description = existingProduct.Description
+		updateParams.Description = existingProduct.ProductDescription
 	}
 
 	if req.CategoryID != nil {
@@ -127,7 +138,7 @@ func (u *productUseCase) UpdateProduct(ctx context.Context, id string, req reque
 		}
 		updateParams.Variants = variants
 	} else {
-		updateParams.Variants = existingProduct.Variants
+		updateParams.Variants = existingProduct.VariantsOrder
 	}
 
 	updatedProduct, err := u.productRepo.UpdateProduct(ctx, updateParams)
@@ -151,33 +162,37 @@ func (u *productUseCase) UpdateProduct(ctx context.Context, id string, req reque
 	}, nil
 }
 
-func (u *productUseCase) GetProducts(ctx context.Context, storeID string, limit, offset int32) ([]response.ProductResponse, error) {
-	products, err := u.productRepo.GetProducts(ctx, db.GetProductsParams{
-		StoreID: pgtype.Text{String: storeID, Valid: true},
-		Limit:   pgtype.Int4{Int32: limit, Valid: true},
-		Offset:  pgtype.Int4{Int32: offset, Valid: true},
-	})
+func (u *productUseCase) GetProducts(ctx context.Context, arg db.GetFilteredProductsParams) ([]db.GetFilteredProductsRow, error) {
+	// products, err := u.productRepo.GetProducts(ctx, db.GetFilteredProductsParams{
+	// 	StoreID: pgtype.Text{String: storeID, Valid: true},
+	// 	Limit:   pgtype.Int4{Int32: limit, Valid: true},
+	// 	Offset:  pgtype.Int4{Int32: offset, Valid: true},
+	// })
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get products: %w", err)
+	// }
+
+	// var productResponses []response.ProductResponse
+	// for _, product := range products {
+	// 	var variants []response.Variant
+	// 	err = json.Unmarshal(product.Variants, &variants)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to unmarshal variants: %w", err)
+	// 	}
+
+	// 	productResponses = append(productResponses, response.ProductResponse{
+	// 		ID:          product.ID,
+	// 		Name:        product.Name,
+	// 		Description: product.Description.String,
+	// 		CategoryID:  product.CategoryID,
+	// 		StoreID:     product.StoreID,
+	// 		Variants:    variants,
+	// 	})
+	// }
+	products, err := u.productRepo.GetProducts(ctx, arg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get products: %w", err)
 	}
 
-	var productResponses []response.ProductResponse
-	for _, product := range products {
-		var variants []response.Variant
-		err = json.Unmarshal(product.Variants, &variants)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal variants: %w", err)
-		}
-
-		productResponses = append(productResponses, response.ProductResponse{
-			ID:          product.ID,
-			Name:        product.Name,
-			Description: product.Description.String,
-			CategoryID:  product.CategoryID,
-			StoreID:     product.StoreID,
-			Variants:    variants,
-		})
-	}
-
-	return productResponses, nil
+	return products, nil
 }

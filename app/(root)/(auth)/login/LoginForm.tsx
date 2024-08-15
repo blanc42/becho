@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { useUser } from '@/lib/store/useUser';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const {setUser} = useUser()
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const form = useForm<LoginFormValues>({
@@ -49,9 +51,10 @@ export function LoginForm() {
         }
         return response.json();
       })
-      .then(data => {
-        console.log('Login successful:', data);
-        router.push('/'); // Redirect to home page or dashboard
+      .then(res => {
+        setUser(res.data)
+        console.log('Login successful:', res);
+        router.push('/dashboard');
       })
       .catch(error => {
         console.error('Error:', error);

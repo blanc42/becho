@@ -5,8 +5,9 @@ import jwt from 'jsonwebtoken';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
+  const refreshToken = request.cookies.get('refresh_token')?.value
 
-  if (!token) {
+  if (!token || !refreshToken) {
     if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')) {
       return NextResponse.next()
     }

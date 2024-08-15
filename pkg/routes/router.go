@@ -21,14 +21,15 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 	{
 		// admin login router
 		api.POST("/signup", u.CreateAdminUser)
-		api.POST("/login", u.Login)
+		api.POST("/login", u.AdminLogin)
 
 		api.GET("/stores/:store_id", s.GetStore)
 		stores := api.Group("/stores/:store_id")
 		{
-			stores.GET("/login", u.Login)
+			// stores.GET("/login", u.Login)
 			stores.POST("/signup", u.CreateCustomer)
 
+			stores.GET("/products", p.GetProducts)
 			products := stores.Group("/products")
 			{
 				products.GET("/:product_id", p.GetProduct)
@@ -67,6 +68,7 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 	admin.Use(middleware.AdminMiddleware())
 	{
 		admin.GET("/user", u.GetUser)
+		admin.POST("/logout", u.Logout)
 		admin.POST("/stores", s.CreateStore)
 		stores := admin.Group("/stores")
 		{
@@ -82,11 +84,11 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 				categories.DELETE("/:category_id", c.DeleteCategory)
 			}
 
-			variants := categories.Group("/:category_id/variants")
+			variants := stores.Group("/:store_id/variants")
 			{
 				variants.POST("/", v.CreateVariant)
-				variants.PUT("/:category_id", v.UpdateVariant)
-				variants.DELETE("/:category_id", v.DeleteVariant)
+				variants.PUT("/:variant_id", v.UpdateVariant)
+				variants.DELETE("/:variant_id", v.DeleteVariant)
 			}
 
 		}

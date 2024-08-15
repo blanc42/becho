@@ -60,7 +60,7 @@ func RefreshToken(tokenString string) (string, error) {
 	}
 
 	// Set new expiration time
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(7 * 24 * time.Hour)
 	claims.ExpiresAt = jwt.NewNumericDate(expirationTime)
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -105,7 +105,7 @@ func IsTokenExpired(tokenString string) bool {
 
 // GenerateAccessAndRefreshTokens creates both access and refresh tokens
 func GenerateAccessAndRefreshTokens(userID, role string) (string, string, error) {
-	accessTokenExpiration := time.Now().Add(15 * time.Minute)
+	accessTokenExpiration := time.Now().Add(5 * time.Minute)
 	refreshTokenExpiration := time.Now().Add(7 * 24 * time.Hour)
 
 	accessToken, err := GenerateToken(userID, role, "", accessTokenExpiration)
@@ -131,6 +131,18 @@ func SetTokenCookie(c *gin.Context, token string) {
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 		MaxAge:   int(time.Hour * 24 * 7 / time.Second), // 1 week
+	})
+}
+
+func SetRefreshTokenCookie(c *gin.Context, token string) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    token,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+		MaxAge:   int(time.Hour * 24 * 7 / time.Second),
 	})
 }
 

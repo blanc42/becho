@@ -42,8 +42,8 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ isOpen, onClose }) 
           throw new Error('Failed to create store')
         }
 
-        const newStore = await response.json()
-        addStore(newStore)
+        const res = await response.json()
+        addStore(res.data)
         setStoreName('')
         onClose()
       } catch (error) {

@@ -31,6 +31,14 @@ func (h *variantHandler) CreateVariant(c *gin.Context) {
 		return
 	}
 
+	storeID := c.Param("store_id")
+	if storeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "store_id is required"})
+		return
+	}
+
+	req.StoreID = storeID
+
 	variantID, err := h.variantUsecase.CreateVariant(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -42,8 +50,13 @@ func (h *variantHandler) CreateVariant(c *gin.Context) {
 
 func (h *variantHandler) GetVariant(c *gin.Context) {
 	id := c.Param("id")
+	storeID := c.Value("store_id")
+	if storeID == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "store_id is required"})
+		return
+	}
 
-	variant, err := h.variantUsecase.GetVariant(c, id)
+	variant, err := h.variantUsecase.GetVariant(c, id, storeID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -54,12 +67,19 @@ func (h *variantHandler) GetVariant(c *gin.Context) {
 
 func (h *variantHandler) UpdateVariant(c *gin.Context) {
 	id := c.Param("id")
-
 	var req request.UpdateVariantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	storeID := c.GetString("store_id")
+	if storeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "store_id is required"})
+		return
+	}
+
+	req.StoreID = storeID
 
 	updatedVariant, err := h.variantUsecase.UpdateVariant(c, id, req)
 	if err != nil {
@@ -86,13 +106,13 @@ func (h *variantHandler) DeleteVariant(c *gin.Context) {
 }
 
 func (h *variantHandler) ListVariants(c *gin.Context) {
-	storeID := c.Query("store_id")
-	if storeID == "" {
+	storeID := c.Value("store_id")
+	if storeID == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "store_id is required"})
 		return
 	}
 
-	variants, err := h.variantUsecase.ListVariants(c)
+	variants, err := h.variantUsecase.ListVariants(c, storeID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

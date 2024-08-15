@@ -15,10 +15,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
-    <html lang="en">
+    <html suppressHydrationWarning={true} lang="en">
       <body className={inter.className}>
-        <ThemeProvider defaultTheme="light" attribute="class">
+        <ThemeProvider defaultTheme="dark" attribute="class">
           {children}
         </ThemeProvider>
       </body>

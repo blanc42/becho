@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS variant_options (
     id CHAR(11) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    variant_id CHAR(11),
+    variant_id CHAR(11) NOT NULL,
     name VARCHAR(255) NOT NULL,
     display_order INT NOT NULL,
     CONSTRAINT fk_variant_option_variant
@@ -88,6 +88,8 @@ CREATE INDEX idx_variant_option_display_order ON variant_options(display_order);
 
 CREATE TABLE IF NOT EXISTS products (
     id CHAR(11) PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     rating FLOAT CHECK (rating > 0 AND rating < 6),
@@ -132,10 +134,10 @@ CREATE INDEX idx_product_variants_sku ON product_variants(sku);
 CREATE INDEX idx_product_variants_price ON product_variants(price);
 
 CREATE TABLE product_variant_options (
-    product_variant_id CHAR(11),
-    variant_option_id CHAR(11),
-    PRIMARY KEY (product_variant_item_id, variant_option_id),
-    FOREIGN KEY (product_variant_item_id) REFERENCES product_variant_items(id),
+    product_variant_id CHAR(11) NOT NULL,
+    variant_option_id CHAR(11) NOT NULL,
+    PRIMARY KEY (product_variant_id, variant_option_id),
+    FOREIGN KEY (product_variant_id) REFERENCES product_variants(id),
     FOREIGN KEY (variant_option_id) REFERENCES variant_options(id)
 );
 
@@ -152,7 +154,7 @@ CREATE TABLE IF NOT EXISTS images (
         REFERENCES product_variants(id)
 );
 
-CREATE INDEX idx_image_product_variant_item_id ON images(product_variant_item_id);
+CREATE INDEX idx_image_product_variant_id ON images(product_variant_id);
 CREATE INDEX idx_image_display_order ON images(display_order);
 
 CREATE TABLE IF NOT EXISTS orders (

@@ -8,26 +8,29 @@ import (
 	db "github.com/blanc42/becho/pkg/db/sqlc"
 	"github.com/blanc42/becho/pkg/domain"
 	"github.com/blanc42/becho/pkg/handlers/request"
+	"github.com/blanc42/becho/pkg/handlers/response"
 	"github.com/blanc42/becho/pkg/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type UserUsecase interface {
 	CreateUser(ctx context.Context, user_request request.CreateUserRequest) (string, error)
-	GetUser(ctx context.Context, id string) (db.User, error)
+	GetAdminUser(ctx context.Context, user_id string) (response.AdminLoginResponse, error)
+	GetCustomer(ctx context.Context, id string) (response.CustomerLoginResponse, error)
 	UpdateUser(ctx context.Context, id string, user_request request.UpdateUserRequest) (db.User, error)
 	DeleteUser(ctx context.Context, id string) error
 	ListUsers(ctx context.Context, limit, offset int32) ([]db.User, error)
-	AuthenticateUser(ctx context.Context, email, password string) (db.User, error)
+	AuthenticateUser(ctx context.Context, email, password string) (response.AdminLoginResponse, error)
 	CreateAdminUser(ctx context.Context, user_request request.CreateAdminRequest) (string, error)
 }
 
 type userUseCase struct {
-	userRepo domain.UserRepository
+	userRepo  domain.UserRepository
+	storeRepo domain.StoreRepository
 }
 
-func NewUserUseCase(userRepo domain.UserRepository) UserUsecase {
-	return &userUseCase{userRepo: userRepo}
+func NewUserUseCase(userRepo domain.UserRepository, storeRepo domain.StoreRepository) UserUsecase {
+	return &userUseCase{userRepo: userRepo, storeRepo: storeRepo}
 }
 
 func (u *userUseCase) CreateAdminUser(ctx context.Context, user_request request.CreateAdminRequest) (string, error) {
@@ -90,12 +93,47 @@ func (u *userUseCase) CreateUser(ctx context.Context, user_request request.Creat
 	return createdID, nil
 }
 
-func (u *userUseCase) GetUser(ctx context.Context, id string) (db.User, error) {
+func (u *userUseCase) GetAdminUser(ctx context.Context, user_id string) (response.AdminLoginResponse, error) {
+	user, err := u.userRepo.GetUser(ctx, user_id)
+	if err != nil {
+		return response.AdminLoginResponse{}, fmt.Errorf("failed to get user: %w", err)
+	}
+	stores, err := u.storeRepo.ListStores(ctx, user_id)
+
+	fmt.Println("I am from the GET ADMIN USER use case <<<============================")
+	fmt.Printf("the user is %s with stores %v", user_id, stores)
+	if err != nil {
+		return response.AdminLoginResponse{}, fmt.Errorf("failed to get stores: %w", err)
+	}
+	if len(stores) == 0 {
+		stores = []db.Store{}
+	}
+
+	login_response := response.AdminLoginResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     string(user.Role),
+		Stores:   stores,
+	}
+
+	return login_response, nil
+}
+
+func (u *userUseCase) GetCustomer(ctx context.Context, id string) (response.CustomerLoginResponse, error) {
 	user, err := u.userRepo.GetUser(ctx, id)
 	if err != nil {
-		return db.User{}, fmt.Errorf("failed to get user: %w", err)
+		return response.CustomerLoginResponse{}, fmt.Errorf("failed to get user: %w", err)
 	}
-	return user, nil
+
+	login_response := response.CustomerLoginResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     string(user.Role),
+	}
+
+	return login_response, nil
 }
 
 func (u *userUseCase) UpdateUser(ctx context.Context, id string, user_request request.UpdateUserRequest) (db.User, error) {
@@ -131,9 +169,6 @@ func (u *userUseCase) UpdateUser(ctx context.Context, id string, user_request re
 		updateParams.Password = existingUser.Password
 	}
 
-	updateParams.Role = existingUser.Role
-	updateParams.StoreID = existingUser.StoreID
-
 	updatedUser, err := u.userRepo.UpdateUser(ctx, updateParams)
 	if err != nil {
 		return db.User{}, fmt.Errorf("failed to update user: %w", err)
@@ -151,22 +186,45 @@ func (u *userUseCase) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (u *userUseCase) ListUsers(ctx context.Context, limit, offset int32) ([]db.User, error) {
-	users, err := u.userRepo.ListUsers(ctx, db.ListUsersParams{Limit: limit, Offset: offset})
+	store_id := ctx.Value("store_id")
+	users, err := u.userRepo.ListUsers(ctx, db.ListUsersForStoreParams{
+		StoreID: pgtype.Text{String: store_id.(string), Valid: true},
+		Limit:   limit,
+		Offset:  offset,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 	return users, nil
 }
 
-func (u *userUseCase) AuthenticateUser(ctx context.Context, email, password string) (db.User, error) {
+func (u *userUseCase) AuthenticateUser(ctx context.Context, email, password string) (response.AdminLoginResponse, error) {
 	user, err := u.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		return db.User{}, fmt.Errorf("failed to get user by email: %w", err)
+		return response.AdminLoginResponse{}, fmt.Errorf("failed to get user by email: %w", err)
+	}
+
+	stores, err := u.storeRepo.ListStores(ctx, user.ID)
+
+	if len(stores) == 0 {
+		stores = []db.Store{}
+	}
+
+	login_response := response.AdminLoginResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     string(user.Role),
+		Stores:   stores,
+	}
+
+	if err != nil {
+		return response.AdminLoginResponse{}, fmt.Errorf("failed to get stores: %w", err)
 	}
 
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return db.User{}, fmt.Errorf("invalid credentials")
+		return response.AdminLoginResponse{}, fmt.Errorf("invalid credentials")
 	}
 
-	return user, nil
+	return login_response, nil
 }

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover"
 import { useStore } from '@/lib/store/useStore'
 import CreateStoreModal from './CreateStoreModal'
+import { useEffect } from "react"
 
 interface Store {
   id: string
@@ -30,20 +31,13 @@ const StoreSelector = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
   const { stores, selectedStore, setSelectedStore, fetchStores } = useStore()
 
-  React.useEffect(() => {
-    const initializeStores = async () => {
-      await fetchStores()
-    }
-    initializeStores()
-  }, [])
-
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('Selected Store Updated:', selectedStore)
   }, [selectedStore])
 
   const handleStoreSelect = (storeId: string) => {
     console.log('Selecting store with ID:', storeId)
-    const store = stores.find(s => s.id === storeId)
+    const store = stores?.find(s => s.id === storeId)
     if (store) {
       setSelectedStore(store)
       localStorage.setItem('selectedStoreId', store.id)
@@ -78,7 +72,7 @@ const StoreSelector = () => {
             <CommandList>
               <CommandEmpty>No store found.</CommandEmpty>
               <CommandGroup>
-                {stores.map((store) => (
+                {stores?.map((store) => (
                   <CommandItem
 
                     key={store.id}

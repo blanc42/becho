@@ -17,7 +17,7 @@ type StoreUsecase interface {
 	GetStore(ctx context.Context, id string) (db.Store, error)
 	UpdateStore(ctx context.Context, id string, storeRequest request.UpdateStoreRequest) (db.Store, error)
 	DeleteStore(ctx context.Context, id string) error
-	ListStores(ctx context.Context, limit, offset int32) ([]db.Store, error)
+	ListStores(ctx context.Context, user_id string) ([]db.Store, error)
 }
 
 type storeUseCase struct {
@@ -111,8 +111,8 @@ func (s *storeUseCase) DeleteStore(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *storeUseCase) ListStores(ctx context.Context, limit, offset int32) ([]db.Store, error) {
-	stores, err := s.storeRepo.ListStores(ctx, db.ListStoresParams{Limit: limit, Offset: offset})
+func (s *storeUseCase) ListStores(ctx context.Context, user_id string) ([]db.Store, error) {
+	stores, err := s.storeRepo.ListStores(ctx, user_id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list stores: %w", err)
 	}

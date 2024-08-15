@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/blanc42/becho/pkg/handlers/request"
 	"github.com/blanc42/becho/pkg/usecase"
@@ -13,10 +13,11 @@ import (
 type UserHandler interface {
 	CreateAdminUser(c *gin.Context)
 	CreateCustomer(c *gin.Context)
-	Login(c *gin.Context)
+	AdminLogin(c *gin.Context)
 	GetUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
 	DeleteUser(c *gin.Context)
+	Logout(c *gin.Context)
 }
 
 type userHandler struct {
@@ -59,7 +60,7 @@ func (h *userHandler) CreateCustomer(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"user_id": userID, "message": "Customer created successfully"})
 }
 
-func (h *userHandler) Login(c *gin.Context) {
+func (h *userHandler) AdminLogin(c *gin.Context) {
 	var req request.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -72,30 +73,45 @@ func (h *userHandler) Login(c *gin.Context) {
 		return
 	}
 
-	jwt_token, err := utils.GenerateToken(user.ID, user.Role, "", time.Now().Add(time.Hour*24))
+	accessToken, refreshToken, err := utils.GenerateAccessAndRefreshTokens(user.ID, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	utils.SetTokenCookie(c, jwt_token)
+	utils.SetTokenCookie(c, accessToken)
+	utils.SetRefreshTokenCookie(c, refreshToken)
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "data": user})
 }
 
+func (h *userHandler) Logout(c *gin.Context) {
+	utils.ClearTokenCookie(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
+}
+
 func (h *userHandler) GetUser(c *gin.Context) {
-	userID, ok := c.Get("user_id")
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
-		return
-	}
+	userID := c.Value("user_id")
+	role := c.Value("user_role")
 
-	user, err := h.userUsecase.GetUser(c, userID.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	fmt.Println(userID, role)
 
-	c.JSON(http.StatusOK, user)
+	if role == "admin" {
+		user, err := h.userUsecase.GetAdminUser(c, userID.(string))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": user, "message": "User retrieved successfully"})
+	} else if role == "customer" {
+		user, err := h.userUsecase.GetCustomer(c, userID.(string))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": user, "message": "User retrieved successfully"})
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	}
 }
 
 func (h *userHandler) UpdateUser(c *gin.Context) {

@@ -17,11 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
-interface Variant {
-  id: string
-  name: string
-}
+import { Variant } from "@/lib/types"
 
 const variants: Variant[] = [
   { id: "1", name: "Size" },
