@@ -1,4 +1,4 @@
-module github.com/blanc42/becho
+module github.com/blanc42/becho/apps/admin
 
 go 1.20
 

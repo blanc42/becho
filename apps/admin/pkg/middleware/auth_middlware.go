@@ -3,10 +3,10 @@ package middleware
 import (
 	"net/http"
 
-	db "github.com/blanc42/becho/pkg/db/sqlc"
-	"github.com/blanc42/becho/pkg/domain"
-	"github.com/blanc42/becho/pkg/initializers"
-	"github.com/blanc42/becho/pkg/utils"
+	db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
+	"github.com/blanc42/becho/apps/admin/pkg/domain"
+	"github.com/blanc42/becho/apps/admin/pkg/initializers"
+	"github.com/blanc42/becho/apps/admin/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 

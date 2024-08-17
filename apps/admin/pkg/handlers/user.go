@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/blanc42/becho/pkg/handlers/request"
-	"github.com/blanc42/becho/pkg/usecase"
-	"github.com/blanc42/becho/pkg/utils"
+	"github.com/blanc42/becho/apps/admin/pkg/handlers/request"
+	"github.com/blanc42/becho/apps/admin/pkg/usecase"
+	"github.com/blanc42/becho/apps/admin/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 

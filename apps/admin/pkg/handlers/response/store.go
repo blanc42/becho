@@ -1,6 +1,6 @@
 package response
 
-import db "github.com/blanc42/becho/pkg/db/sqlc"
+import db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
 
 type StoreResponse struct {
 	ID          string             `json:"id"`

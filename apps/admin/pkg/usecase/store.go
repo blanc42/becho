@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/blanc42/becho/pkg/db/sqlc"
-	"github.com/blanc42/becho/pkg/domain"
-	"github.com/blanc42/becho/pkg/handlers/request"
-	"github.com/blanc42/becho/pkg/utils"
+	db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
+	"github.com/blanc42/becho/apps/admin/pkg/domain"
+	"github.com/blanc42/becho/apps/admin/pkg/handlers/request"
+	"github.com/blanc42/becho/apps/admin/pkg/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

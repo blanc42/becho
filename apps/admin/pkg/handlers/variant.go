@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/blanc42/becho/pkg/handlers/request"
-	"github.com/blanc42/becho/pkg/usecase"
+	"github.com/blanc42/becho/apps/admin/pkg/handlers/request"
+	"github.com/blanc42/becho/apps/admin/pkg/usecase"
 	"github.com/gin-gonic/gin"
 )
 

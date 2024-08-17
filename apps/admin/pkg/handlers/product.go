@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	db "github.com/blanc42/becho/pkg/db/sqlc"
-	"github.com/blanc42/becho/pkg/handlers/request"
-	"github.com/blanc42/becho/pkg/usecase"
+	db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
+	"github.com/blanc42/becho/apps/admin/pkg/handlers/request"
+	"github.com/blanc42/becho/apps/admin/pkg/usecase"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 )

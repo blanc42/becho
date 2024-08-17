@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	db "github.com/blanc42/becho/pkg/db/sqlc"
+	db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
 )
 
 type UserRepository interface {

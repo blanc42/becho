@@ -3,7 +3,7 @@ package response
 import (
 	"time"
 
-	db "github.com/blanc42/becho/pkg/db/sqlc"
+	db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
 )
 
 type CreateVariantResponse struct {

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"github.com/blanc42/becho/pkg/handlers"
-	"github.com/blanc42/becho/pkg/middleware"
+	"github.com/blanc42/becho/apps/admin/pkg/handlers"
+	"github.com/blanc42/becho/apps/admin/pkg/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

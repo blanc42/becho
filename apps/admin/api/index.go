@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	db "github.com/blanc42/becho/pkg/db/sqlc"
-	"github.com/blanc42/becho/pkg/domain"
-	"github.com/blanc42/becho/pkg/handlers"
-	"github.com/blanc42/becho/pkg/initializers"
-	"github.com/blanc42/becho/pkg/routes"
-	"github.com/blanc42/becho/pkg/usecase"
+	db "github.com/blanc42/becho/apps/admin/pkg/db/sqlc"
+	"github.com/blanc42/becho/apps/admin/pkg/domain"
+	"github.com/blanc42/becho/apps/admin/pkg/handlers"
+	"github.com/blanc42/becho/apps/admin/pkg/initializers"
+	"github.com/blanc42/becho/apps/admin/pkg/routes"
+	"github.com/blanc42/becho/apps/admin/pkg/usecase"
 	"github.com/gin-gonic/gin"
 )
 
