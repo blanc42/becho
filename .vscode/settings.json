@@ -1,5 +1,6 @@
 {
     "search.exclude": {
         "": true
-    }
+    },
+    "makefile.configureOnOpen": false
 }
