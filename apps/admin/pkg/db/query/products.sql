@@ -1,7 +1,7 @@
 -- Products
 -- name: CreateProduct :one
-INSERT INTO products (id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+INSERT INTO products (id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 RETURNING *;
 
 
@@ -62,8 +62,8 @@ OFFSET COALESCE(sqlc.narg('offset')::integer, 0);
 
 -- name: UpdateProduct :one
 UPDATE products
-SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, category_name = $9, variants = $10, updated_at = $11
-WHERE id = $1 AND store_id = $12
+SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, variants = $9, updated_at = $10
+WHERE id = $1 AND store_id = $11
 RETURNING *;
 
 -- name: DeleteProduct :exec
@@ -90,7 +90,6 @@ SELECT
   p.is_archived,
   p.has_variants,
   p.category_id,
-  p.category_name,
   p.variants,
 	COALESCE(
     JSON_AGG(

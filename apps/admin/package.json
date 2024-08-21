@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "vercel-dev": "vercel dev"
+    "client": "vercel dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -19,6 +19,8 @@
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-slot": "^1.1.0",
     "@types/jsonwebtoken": "^9.0.6",
+    "@uploadcare/react-uploader": "^1.0.0",
+    "@uploadcare/react-widget": "^2.4.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",

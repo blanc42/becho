@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const Home = () => {
-  const onOpen = useStoreModal((state) => state.onOpen);
+  const {isOpen, onClose,onOpen} = useStoreModal()
   const {user} = useUser()
   const router = useRouter()
 

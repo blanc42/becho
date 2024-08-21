@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS categories (
     description TEXT,
     store_id CHAR(11) NOT NULL,
     parent_id CHAR(11),
+    level INT NOT NULL,
     variants JSONB, -- in order
     CONSTRAINT fk_category_store
         FOREIGN KEY (store_id) 
@@ -60,7 +61,8 @@ CREATE TABLE IF NOT EXISTS variants (
     id CHAR(11) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(64) NOT NULL,
+    label VARCHAR(64) NOT NULL,
     description TEXT,
     store_id CHAR(11) NOT NULL,
     CONSTRAINT fk_variant_store
@@ -76,7 +78,7 @@ CREATE TABLE IF NOT EXISTS variant_options (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     variant_id CHAR(11) NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(64) NOT NULL,
     display_order INT NOT NULL,
     CONSTRAINT fk_variant_option_variant
         FOREIGN KEY (variant_id) 
@@ -98,7 +100,6 @@ CREATE TABLE IF NOT EXISTS products (
     has_variants BOOLEAN,
     category_id CHAR(11) NOT NULL,
     store_id CHAR(11) NOT NULL,
-    category_name VARCHAR(255) NOT NULL,
     variants JSONB, -- Array of variant IDs in order
     CONSTRAINT fk_product_category
         FOREIGN KEY (category_id) 

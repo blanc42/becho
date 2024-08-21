@@ -1,5 +1,5 @@
 'use client'
-import LoadingPage from '@/components/LoadingPage';
+import LoadingPage from '@/components/pages/LoadingPage';
 import { useUser } from '@/lib/store/useUser';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';

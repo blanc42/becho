@@ -13,25 +13,24 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants
+INSERT INTO products (id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants
 `
 
 type CreateProductParams struct {
-	ID           string           `json:"id"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	Name         string           `json:"name"`
-	Description  pgtype.Text      `json:"description"`
-	Rating       pgtype.Float8    `json:"rating"`
-	IsFeatured   pgtype.Bool      `json:"is_featured"`
-	IsArchived   pgtype.Bool      `json:"is_archived"`
-	HasVariants  pgtype.Bool      `json:"has_variants"`
-	CategoryID   string           `json:"category_id"`
-	StoreID      string           `json:"store_id"`
-	CategoryName string           `json:"category_name"`
-	Variants     json.RawMessage  `json:"variants"`
+	ID          string           `json:"id"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	Rating      pgtype.Float8    `json:"rating"`
+	IsFeatured  pgtype.Bool      `json:"is_featured"`
+	IsArchived  pgtype.Bool      `json:"is_archived"`
+	HasVariants pgtype.Bool      `json:"has_variants"`
+	CategoryID  string           `json:"category_id"`
+	StoreID     string           `json:"store_id"`
+	Variants    json.RawMessage  `json:"variants"`
 }
 
 // Products
@@ -48,7 +47,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.HasVariants,
 		arg.CategoryID,
 		arg.StoreID,
-		arg.CategoryName,
 		arg.Variants,
 	)
 	var i Product
@@ -64,7 +62,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.HasVariants,
 		&i.CategoryID,
 		&i.StoreID,
-		&i.CategoryName,
 		&i.Variants,
 	)
 	return i, err
@@ -105,7 +102,6 @@ SELECT
   p.is_archived,
   p.has_variants,
   p.category_id,
-  p.category_name,
   p.variants,
 	COALESCE(
     JSON_AGG(
@@ -159,7 +155,6 @@ type GetFilteredProductsRow struct {
 	IsArchived      pgtype.Bool     `json:"is_archived"`
 	HasVariants     pgtype.Bool     `json:"has_variants"`
 	CategoryID      string          `json:"category_id"`
-	CategoryName    string          `json:"category_name"`
 	Variants        json.RawMessage `json:"variants"`
 	ProductVariants interface{}     `json:"product_variants"`
 }
@@ -191,7 +186,6 @@ func (q *Queries) GetFilteredProducts(ctx context.Context, arg GetFilteredProduc
 			&i.IsArchived,
 			&i.HasVariants,
 			&i.CategoryID,
-			&i.CategoryName,
 			&i.Variants,
 			&i.ProductVariants,
 		); err != nil {
@@ -207,24 +201,23 @@ func (q *Queries) GetFilteredProducts(ctx context.Context, arg GetFilteredProduc
 
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
-SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, category_name = $9, variants = $10, updated_at = $11
-WHERE id = $1 AND store_id = $12
-RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, category_name, variants
+SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, variants = $9, updated_at = $10
+WHERE id = $1 AND store_id = $11
+RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants
 `
 
 type UpdateProductParams struct {
-	ID           string           `json:"id"`
-	Name         string           `json:"name"`
-	Description  pgtype.Text      `json:"description"`
-	Rating       pgtype.Float8    `json:"rating"`
-	IsFeatured   pgtype.Bool      `json:"is_featured"`
-	IsArchived   pgtype.Bool      `json:"is_archived"`
-	HasVariants  pgtype.Bool      `json:"has_variants"`
-	CategoryID   string           `json:"category_id"`
-	CategoryName string           `json:"category_name"`
-	Variants     json.RawMessage  `json:"variants"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	StoreID      string           `json:"store_id"`
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	Rating      pgtype.Float8    `json:"rating"`
+	IsFeatured  pgtype.Bool      `json:"is_featured"`
+	IsArchived  pgtype.Bool      `json:"is_archived"`
+	HasVariants pgtype.Bool      `json:"has_variants"`
+	CategoryID  string           `json:"category_id"`
+	Variants    json.RawMessage  `json:"variants"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	StoreID     string           `json:"store_id"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -237,7 +230,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.IsArchived,
 		arg.HasVariants,
 		arg.CategoryID,
-		arg.CategoryName,
 		arg.Variants,
 		arg.UpdatedAt,
 		arg.StoreID,
@@ -255,7 +247,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.HasVariants,
 		&i.CategoryID,
 		&i.StoreID,
-		&i.CategoryName,
 		&i.Variants,
 	)
 	return i, err

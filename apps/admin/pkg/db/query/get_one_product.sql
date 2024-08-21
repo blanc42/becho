@@ -9,7 +9,6 @@ SELECT
     p.has_variants,
     p.category_id,
     p.store_id,
-    p.category_name,
     p.variants AS variants_order,
     COALESCE(
         JSON_AGG(

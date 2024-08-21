@@ -19,6 +19,7 @@ import { useStore } from '@/lib/store/useStore';
 const variantSchema = z.object({
   name: z.string().min(3, 'Variant name must be at least 3 characters'),
   description: z.string().optional(),
+  label: z.string(),
   options: z.array(
     z.object({
       value: z.string().min(3, 'Variant option must be at least 3 characters'),
@@ -39,6 +40,7 @@ export default function AddVariant() {
     defaultValues: {
       name: '',
       description: '',
+      label: '',
       options: [],
     },
   });
@@ -86,7 +88,7 @@ export default function AddVariant() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Size" {...field} />
+                <Input placeholder="Variant Name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -99,7 +101,20 @@ export default function AddVariant() {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder="variant description" {...field} />
+                <Input placeholder="Variant Description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="label"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Label</FormLabel>
+              <FormControl>
+                <Input placeholder="Variant Label" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

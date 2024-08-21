@@ -1,16 +1,15 @@
 package request
 
 type CreateProductRequest struct {
-	Name         string                        `json:"name" binding:"required"`
-	Description  *string                       `json:"description"`
-	IsFeatured   bool                          `json:"is_featured" binding:"required"`
-	IsArchived   bool                          `json:"is_archived"`
-	HasVariants  bool                          `json:"has_variants"` // redundant
-	CategoryID   string                        `json:"category_id" binding:"required"`
-	StoreID      string                        `json:"store_id"`
-	CategoryName *string                       `json:"category_name"`
-	Variants     []string                      `json:"variants"`
-	Items        []CreateProductVariantRequest `json:"items"`
+	Name        string                        `json:"name" binding:"required"`
+	Description *string                       `json:"description"`
+	IsFeatured  bool                          `json:"is_featured" binding:"required"`
+	IsArchived  bool                          `json:"is_archived"`
+	HasVariants bool                          `json:"has_variants"` // redundant
+	CategoryID  string                        `json:"category_id" binding:"required"`
+	StoreID     string                        `json:"store_id"`
+	Variants    []string                      `json:"variants"`
+	Items       []CreateProductVariantRequest `json:"items"`
 }
 
 type CreateProductVariantRequest struct {

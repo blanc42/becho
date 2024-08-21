@@ -12,9 +12,9 @@ import (
 )
 
 const createVariant = `-- name: CreateVariant :one
-INSERT INTO variants (id, created_at, updated_at, name, description, store_id)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, created_at, updated_at, name, description, store_id
+INSERT INTO variants (id, created_at, updated_at, name, label, description, store_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, created_at, updated_at, name, label, description, store_id
 `
 
 type CreateVariantParams struct {
@@ -22,6 +22,7 @@ type CreateVariantParams struct {
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 	Name        string           `json:"name"`
+	Label       string           `json:"label"`
 	Description pgtype.Text      `json:"description"`
 	StoreID     string           `json:"store_id"`
 }
@@ -32,6 +33,7 @@ func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (V
 		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.Name,
+		arg.Label,
 		arg.Description,
 		arg.StoreID,
 	)
@@ -41,6 +43,7 @@ func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (V
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Label,
 		&i.Description,
 		&i.StoreID,
 	)
@@ -50,7 +53,7 @@ func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (V
 const createVariantOption = `-- name: CreateVariantOption :one
 INSERT INTO variant_options (id, created_at, updated_at, variant_id, value, display_order, data, image_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, created_at, updated_at, variant_id, value, data, image_id, display_order
+RETURNING id, created_at, updated_at, variant_id, value, display_order, data, image_id
 `
 
 type CreateVariantOptionParams struct {
@@ -82,9 +85,9 @@ func (q *Queries) CreateVariantOption(ctx context.Context, arg CreateVariantOpti
 		&i.UpdatedAt,
 		&i.VariantID,
 		&i.Value,
+		&i.DisplayOrder,
 		&i.Data,
 		&i.ImageID,
-		&i.DisplayOrder,
 	)
 	return i, err
 }
@@ -111,7 +114,7 @@ func (q *Queries) DeleteVariantOption(ctx context.Context, id string) error {
 
 const getVariant = `-- name: GetVariant :one
 SELECT 
-    v.id, v.created_at, v.updated_at, v.name, v.description, v.store_id,
+    v.id, v.created_at, v.updated_at, v.name, v.label, v.description, v.store_id,
     COALESCE(
         json_agg(
             json_build_object(
@@ -144,6 +147,7 @@ type GetVariantRow struct {
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 	Name        string           `json:"name"`
+	Label       string           `json:"label"`
 	Description pgtype.Text      `json:"description"`
 	StoreID     string           `json:"store_id"`
 	Options     interface{}      `json:"options"`
@@ -157,6 +161,7 @@ func (q *Queries) GetVariant(ctx context.Context, arg GetVariantParams) (GetVari
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Label,
 		&i.Description,
 		&i.StoreID,
 		&i.Options,
@@ -215,7 +220,7 @@ func (q *Queries) GetVariantAndOptionsArrayForVariantIds(ctx context.Context, ar
 }
 
 const getVariantOption = `-- name: GetVariantOption :one
-SELECT id, created_at, updated_at, variant_id, value, data, image_id, display_order FROM variant_options
+SELECT id, created_at, updated_at, variant_id, value, display_order, data, image_id FROM variant_options
 WHERE id = $1 LIMIT 1
 `
 
@@ -228,9 +233,9 @@ func (q *Queries) GetVariantOption(ctx context.Context, id string) (VariantOptio
 		&i.UpdatedAt,
 		&i.VariantID,
 		&i.Value,
+		&i.DisplayOrder,
 		&i.Data,
 		&i.ImageID,
-		&i.DisplayOrder,
 	)
 	return i, err
 }
@@ -289,7 +294,7 @@ func (q *Queries) GetVariantsWithOptionIds(ctx context.Context, storeID string) 
 }
 
 const listVariantOptions = `-- name: ListVariantOptions :many
-SELECT id, created_at, updated_at, variant_id, value, data, image_id, display_order FROM variant_options
+SELECT id, created_at, updated_at, variant_id, value, display_order, data, image_id FROM variant_options
 WHERE variant_id = $1
 ORDER BY display_order
 LIMIT $2 OFFSET $3
@@ -316,9 +321,9 @@ func (q *Queries) ListVariantOptions(ctx context.Context, arg ListVariantOptions
 			&i.UpdatedAt,
 			&i.VariantID,
 			&i.Value,
+			&i.DisplayOrder,
 			&i.Data,
 			&i.ImageID,
-			&i.DisplayOrder,
 		); err != nil {
 			return nil, err
 		}
@@ -332,7 +337,7 @@ func (q *Queries) ListVariantOptions(ctx context.Context, arg ListVariantOptions
 
 const listVariants = `-- name: ListVariants :many
 SELECT 
-    v.id, v.created_at, v.updated_at, v.name, v.description, v.store_id,
+    v.id, v.created_at, v.updated_at, v.name, v.label, v.description, v.store_id,
     COALESCE(
         json_agg(
             json_build_object(
@@ -367,6 +372,7 @@ type ListVariantsRow struct {
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 	Name        string           `json:"name"`
+	Label       string           `json:"label"`
 	Description pgtype.Text      `json:"description"`
 	StoreID     string           `json:"store_id"`
 	Options     interface{}      `json:"options"`
@@ -386,6 +392,7 @@ func (q *Queries) ListVariants(ctx context.Context, arg ListVariantsParams) ([]L
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Name,
+			&i.Label,
 			&i.Description,
 			&i.StoreID,
 			&i.Options,
@@ -402,7 +409,7 @@ func (q *Queries) ListVariants(ctx context.Context, arg ListVariantsParams) ([]L
 
 const listVariantsByIds = `-- name: ListVariantsByIds :many
 SELECT 
-    v.id, v.created_at, v.updated_at, v.name, v.description, v.store_id,
+    v.id, v.created_at, v.updated_at, v.name, v.label, v.description, v.store_id,
     COALESCE(
         json_agg(
             json_build_object(
@@ -435,6 +442,7 @@ type ListVariantsByIdsRow struct {
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 	Name        string           `json:"name"`
+	Label       string           `json:"label"`
 	Description pgtype.Text      `json:"description"`
 	StoreID     string           `json:"store_id"`
 	Options     []byte           `json:"options"`
@@ -454,6 +462,7 @@ func (q *Queries) ListVariantsByIds(ctx context.Context, arg ListVariantsByIdsPa
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Name,
+			&i.Label,
 			&i.Description,
 			&i.StoreID,
 			&i.Options,
@@ -470,9 +479,9 @@ func (q *Queries) ListVariantsByIds(ctx context.Context, arg ListVariantsByIdsPa
 
 const updateVariant = `-- name: UpdateVariant :one
 UPDATE variants
-SET name = $2, description = $3, updated_at = $4
+SET name = $2, description = $3, updated_at = $4, label = $5
 WHERE id = $1
-RETURNING id, created_at, updated_at, name, description, store_id
+RETURNING id, created_at, updated_at, name, label, description, store_id
 `
 
 type UpdateVariantParams struct {
@@ -480,6 +489,7 @@ type UpdateVariantParams struct {
 	Name        string           `json:"name"`
 	Description pgtype.Text      `json:"description"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	Label       string           `json:"label"`
 }
 
 func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (Variant, error) {
@@ -488,6 +498,7 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (V
 		arg.Name,
 		arg.Description,
 		arg.UpdatedAt,
+		arg.Label,
 	)
 	var i Variant
 	err := row.Scan(
@@ -495,6 +506,7 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (V
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Label,
 		&i.Description,
 		&i.StoreID,
 	)
@@ -505,7 +517,7 @@ const updateVariantOption = `-- name: UpdateVariantOption :one
 UPDATE variant_options
 SET value = $2, display_order = $3, updated_at = $4, image_id = $5, data = $6
 WHERE id = $1
-RETURNING id, created_at, updated_at, variant_id, value, data, image_id, display_order
+RETURNING id, created_at, updated_at, variant_id, value, display_order, data, image_id
 `
 
 type UpdateVariantOptionParams struct {
@@ -533,9 +545,9 @@ func (q *Queries) UpdateVariantOption(ctx context.Context, arg UpdateVariantOpti
 		&i.UpdatedAt,
 		&i.VariantID,
 		&i.Value,
+		&i.DisplayOrder,
 		&i.Data,
 		&i.ImageID,
-		&i.DisplayOrder,
 	)
 	return i, err
 }

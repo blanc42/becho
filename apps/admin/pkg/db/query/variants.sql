@@ -1,6 +1,6 @@
 -- name: CreateVariant :one
-INSERT INTO variants (id, created_at, updated_at, name, description, store_id)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO variants (id, created_at, updated_at, name, label, description, store_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: GetVariant :one
@@ -78,7 +78,7 @@ ORDER BY v.created_at;
 
 -- name: UpdateVariant :one
 UPDATE variants
-SET name = $2, description = $3, updated_at = $4
+SET name = $2, description = $3, updated_at = $4, label = $5
 WHERE id = $1
 RETURNING *;
 

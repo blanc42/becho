@@ -15,7 +15,7 @@ import (
 const createCategory = `-- name: CreateCategory :one
 INSERT INTO categories (id, created_at, updated_at, name, description, store_id, parent_id, variants)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, created_at, updated_at, name, description, store_id, parent_id, variants
+RETURNING id, created_at, updated_at, name, description, store_id, parent_id, level, variants
 `
 
 type CreateCategoryParams struct {
@@ -50,6 +50,7 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.Description,
 		&i.StoreID,
 		&i.ParentID,
+		&i.Level,
 		&i.Variants,
 	)
 	return i, err
@@ -157,7 +158,7 @@ func (q *Queries) GetAllCategoriesRecursive(ctx context.Context, storeID string)
 }
 
 const getCategory = `-- name: GetCategory :one
-SELECT id, created_at, updated_at, name, description, store_id, parent_id, variants FROM categories
+SELECT id, created_at, updated_at, name, description, store_id, parent_id, level, variants FROM categories
 WHERE id = $1  LIMIT 1
 `
 
@@ -172,13 +173,14 @@ func (q *Queries) GetCategory(ctx context.Context, id string) (Category, error) 
 		&i.Description,
 		&i.StoreID,
 		&i.ParentID,
+		&i.Level,
 		&i.Variants,
 	)
 	return i, err
 }
 
 const listCategories = `-- name: ListCategories :many
-SELECT id, created_at, updated_at, name, description, store_id, parent_id, variants FROM categories
+SELECT id, created_at, updated_at, name, description, store_id, parent_id, level, variants FROM categories
 WHERE store_id = $1
 ORDER BY created_at
 `
@@ -200,6 +202,7 @@ func (q *Queries) ListCategories(ctx context.Context, storeID string) ([]Categor
 			&i.Description,
 			&i.StoreID,
 			&i.ParentID,
+			&i.Level,
 			&i.Variants,
 		); err != nil {
 			return nil, err
@@ -216,7 +219,7 @@ const updateCategory = `-- name: UpdateCategory :one
 UPDATE categories
 SET name = $2, description = $3, parent_id = $4, variants = $5, updated_at = $6
 WHERE id = $1 AND store_id = $7
-RETURNING id, created_at, updated_at, name, description, store_id, parent_id, variants
+RETURNING id, created_at, updated_at, name, description, store_id, parent_id, level, variants
 `
 
 type UpdateCategoryParams struct {
@@ -248,6 +251,7 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		&i.Description,
 		&i.StoreID,
 		&i.ParentID,
+		&i.Level,
 		&i.Variants,
 	)
 	return i, err

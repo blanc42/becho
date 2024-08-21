@@ -9,7 +9,7 @@
         "persistent": true,
         "cache": false
       },
-      "vercel-dev": {
+      "client": {
         "cache": false,
         "outputs": [".vercel/**", "!.vercel/cache/**"]
       }

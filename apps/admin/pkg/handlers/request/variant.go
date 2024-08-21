@@ -4,6 +4,7 @@ type CreateVariantRequest struct {
 	Name        string                       `json:"name"`
 	Description *string                      `json:"description"`
 	StoreID     string                       `json:"store_id"`
+	Label       string                       `json:"label"`
 	Options     []CreateVariantOptionRequest `json:"options"`
 }
 

@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { useStore } from "@/lib/store/useStore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Eye, Edit, Trash2 } from 'lucide-react';
 
 interface Option {
   id: string;
@@ -78,17 +79,33 @@ export default function VariantsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Options</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {variants.map((variant) => (
                 <TableRow key={variant.id}>
+                  <TableCell>{variant.id}</TableCell>
                   <TableCell>{variant.name}</TableCell>
                   <TableCell>
                     {variant.options.map(option => option.value).join(", ")}
                   </TableCell>
+                  <TableCell>
+              <div className="flex space-x-2">
+                <Button variant="ghost" size="sm" onClick={() => console.log("Preview")}>
+                  <Eye className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => console.log("Edit")}>
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => console.log("Delete")}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </TableCell>
                 </TableRow>
               ))}
             </TableBody>

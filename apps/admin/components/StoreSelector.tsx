@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useStore } from '@/lib/store/useStore'
-import CreateStoreModal from './CreateStoreModal'
+import CreateStoreModal from './modals/CreateStoreModal'
 import { useEffect } from "react"
 
 interface Store {

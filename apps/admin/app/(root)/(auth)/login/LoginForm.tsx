@@ -94,9 +94,13 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+        <div className='flex space-x-4'>
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Log in'}
         </Button>
+        <Button onClick={() => router.push('/signup')} variant={'outline'}>Sign up</Button>
+        </div>
       </form>
     </Form>
   );

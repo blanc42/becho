@@ -23,7 +23,6 @@ SELECT
     p.has_variants,
     p.category_id,
     p.store_id,
-    p.category_name,
     p.variants AS variants_order,
     COALESCE(
         JSON_AGG(
@@ -125,7 +124,6 @@ type GetProductRow struct {
 	HasVariants           pgtype.Bool     `json:"has_variants"`
 	CategoryID            string          `json:"category_id"`
 	StoreID               string          `json:"store_id"`
-	CategoryName          string          `json:"category_name"`
 	VariantsOrder         json.RawMessage `json:"variants_order"`
 	ProductVariants       interface{}     `json:"product_variants"`
 	AvailableCombinations interface{}     `json:"available_combinations"`
@@ -145,7 +143,6 @@ func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (GetProd
 		&i.HasVariants,
 		&i.CategoryID,
 		&i.StoreID,
-		&i.CategoryName,
 		&i.VariantsOrder,
 		&i.ProductVariants,
 		&i.AvailableCombinations,

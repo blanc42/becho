@@ -9,6 +9,7 @@ import (
 	"github.com/blanc42/becho/apps/admin/pkg/handlers"
 	"github.com/blanc42/becho/apps/admin/pkg/initializers"
 	"github.com/blanc42/becho/apps/admin/pkg/routes"
+	"github.com/blanc42/becho/apps/admin/pkg/services"
 	"github.com/blanc42/becho/apps/admin/pkg/usecase"
 	"github.com/gin-gonic/gin"
 )
@@ -39,6 +40,10 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 
 	router.GET("/api/hello", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello, World!")
+	})
+
+	router.GET("/api/v1/images/upload", func(c *gin.Context) {
+		c.JSON(http.StatusOK, services.GetUploadcareSignedParams())
 	})
 
 	router.ServeHTTP(w, r)

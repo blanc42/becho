@@ -1,7 +1,7 @@
 "use client"
 
-import CreateStoreModal from "@/components/CreateStoreModal";
-import LoadingPage from "@/components/LoadingPage";
+import CreateStoreModal from "@/components/modals/CreateStoreModal";
+import LoadingPage from "@/components/pages/LoadingPage";
 import { useStore } from "@/lib/store/useStore";
 import { useStoreModal } from "@/lib/store/useStoreModal";
 import { useUser } from "@/lib/store/useUser";

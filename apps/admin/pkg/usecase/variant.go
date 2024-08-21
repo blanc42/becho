@@ -51,6 +51,7 @@ func (v *variantUseCase) CreateVariant(ctx context.Context, req request.CreateVa
 		Name:        req.Name,
 		Description: pgtype.Text{String: *req.Description, Valid: req.Description != nil},
 		StoreID:     req.StoreID,
+		Label:       req.Label,
 	}
 
 	createdVariant, err := v.variantRepo.CreateVariant(ctx, newVariant)
