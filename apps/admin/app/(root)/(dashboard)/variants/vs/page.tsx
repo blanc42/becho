@@ -5,7 +5,7 @@ import VariantSelect from "./SelectVariants";
 import { Variant } from "@/lib/types";
 
 export default function SelectVariant() {
-    const [selectedVariants, setSelectedVariants] = useState<Variant[]>([{id: "1", name: "size"}, {id: "2", name: "color"}]);
+    const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
 
     const handleDeleteVariant = (variantId: string) => {
       setSelectedVariants(selectedVariants.filter((v) => v.id !== variantId));

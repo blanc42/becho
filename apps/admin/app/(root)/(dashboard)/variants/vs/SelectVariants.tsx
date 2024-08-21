@@ -18,14 +18,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Variant } from "@/lib/types"
+import { variantsData } from "@/data/variants"
 
-const variants: Variant[] = [
-  { id: "1", name: "Size" },
-  { id: "2", name: "Color" },
-  { id: "3", name: "Cloth Type" },
-  { id: "4", name: "Material" },
-  { id: "5", name: "Pattern" },
-]
 
 const SelectVariants = ({
   selectedVariants,
@@ -37,7 +31,7 @@ const SelectVariants = ({
   const [open, setOpen] = React.useState(false)
 
   const handleVariantSelect = (variantId: string) => {
-    const variant = variants.find((v) => v.id === variantId)
+    const variant = variantsData.find((v) => v.id === variantId)
     if (variant) {
       if (selectedVariants.some((v) => v.id === variantId)) {
         setSelectedVariants(
@@ -69,7 +63,7 @@ const SelectVariants = ({
           <CommandList>
             <CommandEmpty>No variants found.</CommandEmpty>
             <CommandGroup>
-              {variants.map((variant) => (
+              {variantsData.map((variant) => (
                 <CommandItem
                   key={variant.id}
                   value={variant.id}
