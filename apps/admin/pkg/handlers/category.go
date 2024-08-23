@@ -50,8 +50,9 @@ func (h *categoryHandler) CreateCategory(c *gin.Context) {
 
 func (h *categoryHandler) GetCategory(c *gin.Context) {
 	id := c.Param("id")
+	storeID := c.Param("store_id")
 
-	category, err := h.categoryUsecase.GetCategory(c, id)
+	category, err := h.categoryUsecase.GetCategory(c, id, storeID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -62,14 +63,14 @@ func (h *categoryHandler) GetCategory(c *gin.Context) {
 
 func (h *categoryHandler) UpdateCategory(c *gin.Context) {
 	id := c.Param("id")
-
+	storeID := c.Param("store_id")
 	var req request.UpdateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	updatedCategory, err := h.categoryUsecase.UpdateCategory(c, id, req)
+	updatedCategory, err := h.categoryUsecase.UpdateCategory(c, id, storeID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

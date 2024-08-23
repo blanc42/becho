@@ -14,7 +14,7 @@ import (
 const createProductItem = `-- name: CreateProductItem :one
 INSERT INTO product_variants (id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price
+RETURNING id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price, title
 `
 
 type CreateProductItemParams struct {
@@ -53,6 +53,7 @@ func (q *Queries) CreateProductItem(ctx context.Context, arg CreateProductItemPa
 		&i.Price,
 		&i.DiscountedPrice,
 		&i.CostPrice,
+		&i.Title,
 	)
 	return i, err
 }
@@ -68,7 +69,7 @@ func (q *Queries) DeleteProductItem(ctx context.Context, id string) error {
 }
 
 const getProductVariant = `-- name: GetProductVariant :one
-SELECT id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price FROM product_variants
+SELECT id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price, title FROM product_variants
 WHERE id = $1 LIMIT 1
 `
 
@@ -85,12 +86,13 @@ func (q *Queries) GetProductVariant(ctx context.Context, id string) (ProductVari
 		&i.Price,
 		&i.DiscountedPrice,
 		&i.CostPrice,
+		&i.Title,
 	)
 	return i, err
 }
 
 const listProductVariants = `-- name: ListProductVariants :many
-SELECT id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price FROM product_variants
+SELECT id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price, title FROM product_variants
 WHERE product_id = $1
 ORDER BY created_at
 LIMIT $2 OFFSET $3
@@ -121,6 +123,7 @@ func (q *Queries) ListProductVariants(ctx context.Context, arg ListProductVarian
 			&i.Price,
 			&i.DiscountedPrice,
 			&i.CostPrice,
+			&i.Title,
 		); err != nil {
 			return nil, err
 		}
@@ -136,7 +139,7 @@ const updateProductVariant = `-- name: UpdateProductVariant :one
 UPDATE product_variants
 SET sku = $2, quantity = $3, price = $4, discounted_price = $5, cost_price = $6, updated_at = $7
 WHERE id = $1
-RETURNING id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price
+RETURNING id, created_at, updated_at, product_id, sku, quantity, price, discounted_price, cost_price, title
 `
 
 type UpdateProductVariantParams struct {
@@ -170,6 +173,7 @@ func (q *Queries) UpdateProductVariant(ctx context.Context, arg UpdateProductVar
 		&i.Price,
 		&i.DiscountedPrice,
 		&i.CostPrice,
+		&i.Title,
 	)
 	return i, err
 }

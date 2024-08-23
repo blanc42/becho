@@ -87,15 +87,21 @@ type CartItem struct {
 }
 
 type Category struct {
-	ID          string           `json:"id"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	Name        string           `json:"name"`
-	Description pgtype.Text      `json:"description"`
-	StoreID     string           `json:"store_id"`
-	ParentID    pgtype.Text      `json:"parent_id"`
-	Level       int32            `json:"level"`
-	Variants    json.RawMessage  `json:"variants"`
+	ID               string           `json:"id"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	Name             string           `json:"name"`
+	Description      pgtype.Text      `json:"description"`
+	StoreID          string           `json:"store_id"`
+	ParentID         pgtype.Text      `json:"parent_id"`
+	Level            int32            `json:"level"`
+	UniqueIdentifier string           `json:"unique_identifier"`
+}
+
+type CategoryVariant struct {
+	ID         string `json:"id"`
+	CategoryID string `json:"category_id"`
+	VariantID  string `json:"variant_id"`
 }
 
 type Country struct {
@@ -113,6 +119,8 @@ type Image struct {
 	ProductVariantID pgtype.Text      `json:"product_variant_id"`
 	DisplayOrder     int32            `json:"display_order"`
 	ImageUrl         string           `json:"image_url"`
+	StoreID          pgtype.Text      `json:"store_id"`
+	UserID           pgtype.Text      `json:"user_id"`
 }
 
 type Order struct {
@@ -136,18 +144,20 @@ type OrderItem struct {
 }
 
 type Product struct {
-	ID          string           `json:"id"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	Name        string           `json:"name"`
-	Description pgtype.Text      `json:"description"`
-	Rating      pgtype.Float8    `json:"rating"`
-	IsFeatured  pgtype.Bool      `json:"is_featured"`
-	IsArchived  pgtype.Bool      `json:"is_archived"`
-	HasVariants pgtype.Bool      `json:"has_variants"`
-	CategoryID  string           `json:"category_id"`
-	StoreID     string           `json:"store_id"`
-	Variants    json.RawMessage  `json:"variants"`
+	ID              string           `json:"id"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
+	Name            string           `json:"name"`
+	Description     pgtype.Text      `json:"description"`
+	Rating          pgtype.Float8    `json:"rating"`
+	IsFeatured      pgtype.Bool      `json:"is_featured"`
+	IsArchived      pgtype.Bool      `json:"is_archived"`
+	HasVariants     pgtype.Bool      `json:"has_variants"`
+	CategoryID      string           `json:"category_id"`
+	StoreID         string           `json:"store_id"`
+	Variants        json.RawMessage  `json:"variants"`
+	Brand           pgtype.Text      `json:"brand"`
+	NumberOfRatings pgtype.Int4      `json:"number_of_ratings"`
 }
 
 type ProductVariant struct {
@@ -160,6 +170,14 @@ type ProductVariant struct {
 	Price           float64          `json:"price"`
 	DiscountedPrice pgtype.Float8    `json:"discounted_price"`
 	CostPrice       pgtype.Float8    `json:"cost_price"`
+	Title           pgtype.Text      `json:"title"`
+}
+
+type ProductVariantImage struct {
+	ID               string `json:"id"`
+	ImageID          string `json:"image_id"`
+	ProductVariantID string `json:"product_variant_id"`
+	StoreID          string `json:"store_id"`
 }
 
 type ProductVariantOption struct {
@@ -174,6 +192,7 @@ type Store struct {
 	Name        string           `json:"name"`
 	Description pgtype.Text      `json:"description"`
 	UserID      string           `json:"user_id"`
+	Logo        pgtype.Text      `json:"logo"`
 }
 
 type User struct {
@@ -206,4 +225,12 @@ type VariantOption struct {
 	DisplayOrder int32            `json:"display_order"`
 	Data         pgtype.Text      `json:"data"`
 	ImageID      pgtype.Text      `json:"image_id"`
+}
+
+type Wishlist struct {
+	ID               string           `json:"id"`
+	UserID           string           `json:"user_id"`
+	ProductVariantID string           `json:"product_variant_id"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
 }

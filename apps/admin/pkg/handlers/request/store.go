@@ -11,10 +11,12 @@ type UpdateStoreRequest struct {
 }
 
 type CreateCategoryRequest struct {
-	Name        string  `json:"name" binding:"required"`
-	Description *string `json:"description"`
-	ParentID    *string `json:"parent_id,omitempty"`
-	StoreID     string  `json:"store_id"`
+	Name             string   `json:"name" binding:"required"`
+	Description      *string  `json:"description"`
+	ParentID         *string  `json:"parent_id,omitempty"`
+	StoreID          string   `json:"store_id"`
+	UniqueIdentifier string   `json:"unique_identifier" binding:"required"`
+	Variants         []string `json:"variants,omitempty"`
 }
 
 type UpdateCategoryRequest struct {

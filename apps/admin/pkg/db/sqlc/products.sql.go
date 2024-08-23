@@ -15,7 +15,7 @@ import (
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants
+RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants, brand, number_of_ratings
 `
 
 type CreateProductParams struct {
@@ -63,6 +63,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.CategoryID,
 		&i.StoreID,
 		&i.Variants,
+		&i.Brand,
+		&i.NumberOfRatings,
 	)
 	return i, err
 }
@@ -203,7 +205,7 @@ const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, variants = $9, updated_at = $10
 WHERE id = $1 AND store_id = $11
-RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants
+RETURNING id, created_at, updated_at, name, description, rating, is_featured, is_archived, has_variants, category_id, store_id, variants, brand, number_of_ratings
 `
 
 type UpdateProductParams struct {
@@ -248,6 +250,8 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.CategoryID,
 		&i.StoreID,
 		&i.Variants,
+		&i.Brand,
+		&i.NumberOfRatings,
 	)
 	return i, err
 }

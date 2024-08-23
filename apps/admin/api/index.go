@@ -32,7 +32,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 
 	userHandler := handlers.NewUserHandler(usecase.NewUserUseCase(userRepository, storeRepository))
 	storeHandler := handlers.NewStoreHandler(usecase.NewStoreUseCase(storeRepository, userRepository))
-	categoryHandler := handlers.NewCategoryHandler(usecase.NewCategoryUseCase(categoryRepository, storeRepository))
+	categoryHandler := handlers.NewCategoryHandler(usecase.NewCategoryUseCase(categoryRepository, storeRepository, variantRepository))
 	variantHandler := handlers.NewVariantHandler(usecase.NewVariantUseCase(variantRepository, storeRepository))
 	productHandler := handlers.NewProductHandler(usecase.NewProductUseCase(productRepository, storeRepository, variantRepository))
 

@@ -14,7 +14,7 @@ import (
 const createImage = `-- name: CreateImage :one
 INSERT INTO images (id, created_at, updated_at, title, product_variant_id, display_order, image_url)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, title, product_variant_id, display_order, image_url
+RETURNING id, created_at, updated_at, title, product_variant_id, display_order, image_url, store_id, user_id
 `
 
 type CreateImageParams struct {
@@ -46,6 +46,8 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 		&i.ProductVariantID,
 		&i.DisplayOrder,
 		&i.ImageUrl,
+		&i.StoreID,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -54,7 +56,7 @@ const updateImage = `-- name: UpdateImage :one
 UPDATE images
 SET title = $2, image_url = $3, display_order = $4, updated_at = $5
 WHERE id = $1
-RETURNING id, created_at, updated_at, title, product_variant_id, display_order, image_url
+RETURNING id, created_at, updated_at, title, product_variant_id, display_order, image_url, store_id, user_id
 `
 
 type UpdateImageParams struct {
@@ -82,6 +84,8 @@ func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) (Image
 		&i.ProductVariantID,
 		&i.DisplayOrder,
 		&i.ImageUrl,
+		&i.StoreID,
+		&i.UserID,
 	)
 	return i, err
 }

@@ -8,7 +8,7 @@ export default function SelectVariant() {
     const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
 
     const handleDeleteVariant = (variantId: string) => {
-      setSelectedVariants(selectedVariants.filter((v) => v.id !== variantId));
+      setSelectedVariants(selectedVariants.filter((v) => v.id !== variantId));``
     };
   
     return (
