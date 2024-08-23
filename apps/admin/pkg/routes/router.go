@@ -17,7 +17,8 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 	e.Use(cors.New(config))
 
 	e.RedirectTrailingSlash = true
-	// API v1 group
+
+	e.Use(middleware.PublicMiddleware())
 	api := e.Group("/api/v1")
 	{
 		// admin login router
