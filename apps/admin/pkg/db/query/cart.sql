@@ -1,43 +1,23 @@
 
--- Carts
--- name: CreateCart :one
-INSERT INTO carts (id, created_at, updated_at, customer_id, total_price, total_discounted_price, total_quantity)
+-- Cart Items
+-- name: CreateCartItem :one
+INSERT INTO cart_items (id, created_at, updated_at, product_variant_id, quantity, user_id, store_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
--- name: GetCart :one
-SELECT * FROM carts
-WHERE id = $1 LIMIT 1;
-
--- name: GetCartByCustomer :one
-SELECT * FROM carts
-WHERE customer_id = $1 LIMIT 1;
-
--- name: UpdateCart :one
-UPDATE carts
-SET total_price = $2, total_discounted_price = $3, total_quantity = $4, updated_at = $5
-WHERE id = $1
-RETURNING *;
-
--- name: DeleteCart :exec
-DELETE FROM carts
-WHERE id = $1;
-
--- Cart Items
--- name: CreateCartItem :one
-INSERT INTO cart_items (id, created_at, updated_at, product_item_id, quantity, cart_id)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING *;
-
 -- name: GetCartItem :one
-SELECT * FROM cart_items
-WHERE id = $1 LIMIT 1;
+SELECT ci.*, pv.sku, pv.price, pv.discounted_price, pv.title
+FROM cart_items ci
+JOIN product_variants pv ON ci.product_variant_id = pv.id
+WHERE ci.id = $1 LIMIT 1;
 
 -- name: ListCartItems :many
-SELECT * FROM cart_items
-WHERE cart_id = $1
-ORDER BY created_at
-LIMIT $2 OFFSET $3;
+SELECT ci.*, pv.sku, pv.price, pv.discounted_price, pv.title
+FROM cart_items ci
+JOIN product_variants pv ON ci.product_variant_id = pv.id
+WHERE ci.user_id = $1 AND ci.store_id = $2
+ORDER BY ci.created_at
+LIMIT $3 OFFSET $4;
 
 -- name: UpdateCartItem :one
 UPDATE cart_items

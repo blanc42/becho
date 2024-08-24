@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useStore } from '@/lib/store/useStore';
+import { useStoreData } from '@/lib/store/useStoreData';
 import { useCategoriesStore } from '@/lib/store/useCategoriesStore';
 import CategorySingleSelector from '@/components/CategoryTree';
 import { Variant } from '@/lib/types';
@@ -28,7 +28,7 @@ import VariantMultiSelector from '@/components/VariantMultiSelector';
 
 export default function CategoryAddPage() {
     const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
-    const { selectedStore } = useStore();
+    const { selectedStore } = useStoreData();
     const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<createCategoryType>({
@@ -46,17 +46,18 @@ export default function CategoryAddPage() {
         setIsLoading(true);
 
         try {
-            // const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify(values),
-            // });
+            const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(values),
+                credentials: 'include'
+            });
 
-            // if (!response.ok) {
-            //     throw new Error('Failed to create category');
-            // }
+            if (!response.ok) {
+                throw new Error('Failed to create category');
+            }
 
 
             console.log({...values, variants: selectedVariants.map(v => v.id)})

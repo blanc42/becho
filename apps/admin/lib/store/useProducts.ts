@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { useStore } from './useStore'
+import { useStoreData } from './useStoreData'
 
 interface Variant {
   id: string
@@ -33,7 +33,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
   error: null,
 
   fetchProducts: async () => {
-    const selectedStore = useStore.getState().selectedStore
+    const selectedStore = useStoreData.getState().selectedStore
 
     if (!selectedStore) {
       set({ error: "No store selected" })

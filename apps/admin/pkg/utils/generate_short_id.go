@@ -2,20 +2,25 @@ package utils
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"math/big"
+)
+
+const (
+	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	idLength = 11
 )
 
 func GenerateShortID() (string, error) {
-	// Generate 16 random bytes (128 bits, same as UUID)
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
+	bytes := make([]byte, idLength)
+	alphabetLength := big.NewInt(int64(len(alphabet)))
+
+	for i := 0; i < idLength; i++ {
+		n, err := rand.Int(rand.Reader, alphabetLength)
+		if err != nil {
+			return "", err
+		}
+		bytes[i] = alphabet[n.Int64()]
 	}
 
-	// Encode to base64
-	encoded := base64.RawURLEncoding.EncodeToString(b)
-
-	// Return the first 11 characters
-	return encoded[:11], nil
+	return string(bytes), nil
 }

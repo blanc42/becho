@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useCategoriesStore } from "@/lib/store/useCategoriesStore"
-import { useStore } from "@/lib/store/useStore"
+import { useStoreData } from "@/lib/store/useStoreData"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Category } from "@/lib/types"
 
@@ -31,7 +31,7 @@ export function CategorySelector({ onSelect }: CategorySelectorProps) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState("")
   const { categories, fetchCategories, isLoading } = useCategoriesStore()
-  const { selectedStore } = useStore()
+  const { selectedStore } = useStoreData()
 
   React.useEffect(() => {
     if (selectedStore?.id) {

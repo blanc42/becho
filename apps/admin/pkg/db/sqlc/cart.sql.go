@@ -52,18 +52,19 @@ func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, e
 }
 
 const createCartItem = `-- name: CreateCartItem :one
-INSERT INTO cart_items (id, created_at, updated_at, product_item_id, quantity, cart_id)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, created_at, updated_at, product_item_id, quantity, cart_id
+INSERT INTO cart_items (id, created_at, updated_at, product_variant_id, quantity, user_id, store_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, created_at, updated_at, product_variant_id, quantity, user_id, store_id
 `
 
 type CreateCartItemParams struct {
-	ID            string           `json:"id"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
-	ProductItemID string           `json:"product_item_id"`
-	Quantity      int32            `json:"quantity"`
-	CartID        string           `json:"cart_id"`
+	ID               string           `json:"id"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	ProductVariantID string           `json:"product_variant_id"`
+	Quantity         int32            `json:"quantity"`
+	UserID           string           `json:"user_id"`
+	StoreID          string           `json:"store_id"`
 }
 
 // Cart Items
@@ -72,18 +73,20 @@ func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) 
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
-		arg.ProductItemID,
+		arg.ProductVariantID,
 		arg.Quantity,
-		arg.CartID,
+		arg.UserID,
+		arg.StoreID,
 	)
 	var i CartItem
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ProductItemID,
+		&i.ProductVariantID,
 		&i.Quantity,
-		&i.CartID,
+		&i.UserID,
+		&i.StoreID,
 	)
 	return i, err
 }
@@ -149,7 +152,7 @@ func (q *Queries) GetCartByCustomer(ctx context.Context, customerID string) (Car
 }
 
 const getCartItem = `-- name: GetCartItem :one
-SELECT id, created_at, updated_at, product_item_id, quantity, cart_id FROM cart_items
+SELECT id, created_at, updated_at, product_variant_id, quantity, user_id, store_id FROM cart_items
 WHERE id = $1 LIMIT 1
 `
 
@@ -160,28 +163,35 @@ func (q *Queries) GetCartItem(ctx context.Context, id string) (CartItem, error) 
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ProductItemID,
+		&i.ProductVariantID,
 		&i.Quantity,
-		&i.CartID,
+		&i.UserID,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const listCartItems = `-- name: ListCartItems :many
-SELECT id, created_at, updated_at, product_item_id, quantity, cart_id FROM cart_items
-WHERE cart_id = $1
+SELECT id, created_at, updated_at, product_variant_id, quantity, user_id, store_id FROM cart_items
+WHERE user_id = $1 AND store_id = $2
 ORDER BY created_at
-LIMIT $2 OFFSET $3
+LIMIT $3 OFFSET $4
 `
 
 type ListCartItemsParams struct {
-	CartID string `json:"cart_id"`
-	Limit  int32  `json:"limit"`
-	Offset int32  `json:"offset"`
+	UserID  string `json:"user_id"`
+	StoreID string `json:"store_id"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
 }
 
 func (q *Queries) ListCartItems(ctx context.Context, arg ListCartItemsParams) ([]CartItem, error) {
-	rows, err := q.db.Query(ctx, listCartItems, arg.CartID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listCartItems,
+		arg.UserID,
+		arg.StoreID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -193,9 +203,10 @@ func (q *Queries) ListCartItems(ctx context.Context, arg ListCartItemsParams) ([
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.ProductItemID,
+			&i.ProductVariantID,
 			&i.Quantity,
-			&i.CartID,
+			&i.UserID,
+			&i.StoreID,
 		); err != nil {
 			return nil, err
 		}
@@ -247,7 +258,7 @@ const updateCartItem = `-- name: UpdateCartItem :one
 UPDATE cart_items
 SET quantity = $2, updated_at = $3
 WHERE id = $1
-RETURNING id, created_at, updated_at, product_item_id, quantity, cart_id
+RETURNING id, created_at, updated_at, product_variant_id, quantity, user_id, store_id
 `
 
 type UpdateCartItemParams struct {
@@ -263,9 +274,10 @@ func (q *Queries) UpdateCartItem(ctx context.Context, arg UpdateCartItemParams) 
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ProductItemID,
+		&i.ProductVariantID,
 		&i.Quantity,
-		&i.CartID,
+		&i.UserID,
+		&i.StoreID,
 	)
 	return i, err
 }

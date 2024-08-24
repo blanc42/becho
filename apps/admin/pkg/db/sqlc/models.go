@@ -78,12 +78,13 @@ type Cart struct {
 }
 
 type CartItem struct {
-	ID            string           `json:"id"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
-	ProductItemID string           `json:"product_item_id"`
-	Quantity      int32            `json:"quantity"`
-	CartID        string           `json:"cart_id"`
+	ID               string           `json:"id"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
+	ProductVariantID string           `json:"product_variant_id"`
+	Quantity         int32            `json:"quantity"`
+	UserID           string           `json:"user_id"`
+	StoreID          string           `json:"store_id"`
 }
 
 type Category struct {

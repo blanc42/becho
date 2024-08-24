@@ -20,7 +20,6 @@ export default function DashboardLayout({
       onOpen();
       console.log(user)
     } else if (user && user?.stores?.length > 0) {
-      // router.push("/dashboard")
       console.log("user has stores")
     }
   }, [user]);
@@ -29,9 +28,9 @@ export default function DashboardLayout({
     return null;
   }
   return (
-    <div className="flex w-full min-h-screen  flex-col">
+    <div className="flex w-full min-h-screen flex-col">
       <Navbar />
-      <div className='flex w-full flex-col p-4 px-20'>
+      <div className='flex w-full flex-col p-4 px-2 md:px-20'>
         {children}
       </div>
     </div>

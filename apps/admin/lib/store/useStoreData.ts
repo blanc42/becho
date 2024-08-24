@@ -15,7 +15,7 @@ interface StoreState {
   fetchStores: () => Promise<void>
 }
 
-export const useStore = create<StoreState>((set) => ({
+export const useStoreData = create<StoreState>((set) => ({
   stores: [],
   setStores: (stores) => {
     set({ stores })

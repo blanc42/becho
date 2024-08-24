@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Category } from '@/lib/types';
-import { useStore } from './useStore';
+import { useStoreData } from './useStoreData';
 
 interface CategoryWithSubCategories extends Category {
   subCategories?: CategoryWithSubCategories[];
@@ -45,7 +45,7 @@ export const useCategoriesStore = create<CategoriesState>((set) => ({
   isLoading: false,
   error: null,
   fetchCategories: async () => {
-    const storeId = useStore.getState().selectedStore?.id;
+    const storeId = useStoreData.getState().selectedStore?.id;
     set({ isLoading: true, error: null });
     try {
       console.log("Fetching categories for store:", storeId);

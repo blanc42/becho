@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@/lib/store/useStore';
+import { useStoreData } from '@/lib/store/useStoreData';
 import ProductTable from './ProductTable';
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
@@ -21,7 +21,7 @@ interface Product {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { selectedStore } = useStore();
+  const { selectedStore } = useStoreData();
 
   useEffect(() => {
     const fetchProducts = async () => {

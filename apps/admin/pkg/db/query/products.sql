@@ -121,3 +121,52 @@ WHERE
 GROUP BY p.id
 LIMIT COALESCE(sqlc.narg('limit')::integer, 10)
 OFFSET COALESCE(sqlc.narg('offset')::integer, 0);
+
+
+
+-- name: GetFilteredProductsForStore :many
+WITH filter_data AS (
+  SELECT *
+  FROM jsonb_each(sqlc.narg('variants')::jsonb) AS f(variant_id, option_ids)
+),
+filter_options AS (
+  SELECT 
+    f.variant_id,
+    jsonb_array_elements_text(f.option_ids) AS option_id
+  FROM filter_data f
+)
+SELECT 
+  p.id,
+  p.name,
+  p.description,
+  p.rating,
+  p.is_featured,
+  p.is_archived,
+  p.has_variants,
+  p.category_id,
+  p.variants,
+	COALESCE(
+    JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'id', pv.id,
+            'price', pv.price,
+            'discounted_price', pv.discounted_price
+          )
+        ) FILTER (WHERE pv.id IS NOT NULL),
+        '[]'::JSON
+      ) AS product_variants
+FROM products p
+	LEFT JOIN product_variants pv ON pv.product_id = p.id
+  LEFT JOIN product_variant_options pvo ON pv.id = pvo.product_variant_id
+  LEFT JOIN variant_options vo ON vo.id = pvo.variant_option_id
+	LEFT JOIN filter_options fo ON vo.id = fo.option_id AND fo.variant_id = vo.variant_id 
+	LEFT JOIN variants v ON vo.variant_id = v.id
+WHERE
+	p.store_id = sqlc.narg('store_id')
+  AND p.is_archived = false
+  AND (sqlc.narg('category_id')::text IS NULL OR p.category_id = sqlc.narg('category_id'))
+  AND (sqlc.narg('is_featured')::boolean IS NULL OR p.is_featured = sqlc.narg('is_featured'))
+  AND (sqlc.narg('search')::text IS NULL OR p.name ILIKE '%' || sqlc.narg('search') || '%' OR p.description ILIKE '%' || sqlc.narg('search') || '%')
+GROUP BY p.id
+LIMIT COALESCE(sqlc.narg('limit')::integer, 12)
+OFFSET COALESCE(sqlc.narg('offset')::integer, 0);

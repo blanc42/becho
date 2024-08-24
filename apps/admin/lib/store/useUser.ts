@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { useStore } from './useStore'
+import { useStoreData } from './useStoreData'
 
 interface User {
   id: string
@@ -24,7 +24,7 @@ export const useUser = create<UserState>((set, get) => ({
   user: null,
   setUser: (user) => {
     set({ user })
-    const { setStores } = useStore.getState()
+    const { setStores } = useStoreData.getState()
     setStores(user.stores)
   },
   fetchUser: async () => {
@@ -38,7 +38,7 @@ export const useUser = create<UserState>((set, get) => ({
       }
       const res = await response.json()
       set({ user : res.data })
-      const { setStores } = useStore.getState()
+      const { setStores } = useStoreData.getState()
       setStores(res.data.stores)
 
       return res.data

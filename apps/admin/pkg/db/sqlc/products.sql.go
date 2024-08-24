@@ -201,6 +201,116 @@ func (q *Queries) GetFilteredProducts(ctx context.Context, arg GetFilteredProduc
 	return items, nil
 }
 
+const getFilteredProductsForStore = `-- name: GetFilteredProductsForStore :many
+WITH filter_data AS (
+  SELECT variant_id, option_ids
+  FROM jsonb_each($7::jsonb) AS f(variant_id, option_ids)
+),
+filter_options AS (
+  SELECT 
+    f.variant_id,
+    jsonb_array_elements_text(f.option_ids) AS option_id
+  FROM filter_data f
+)
+SELECT 
+  p.id,
+  p.name,
+  p.description,
+  p.rating,
+  p.is_featured,
+  p.is_archived,
+  p.has_variants,
+  p.category_id,
+  p.variants,
+	COALESCE(
+    JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'id', pv.id,
+            'price', pv.price,
+            'discounted_price', pv.discounted_price
+          )
+        ) FILTER (WHERE pv.id IS NOT NULL),
+        '[]'::JSON
+      ) AS product_variants
+FROM products p
+	LEFT JOIN product_variants pv ON pv.product_id = p.id
+  LEFT JOIN product_variant_options pvo ON pv.id = pvo.product_variant_id
+  LEFT JOIN variant_options vo ON vo.id = pvo.variant_option_id
+	LEFT JOIN filter_options fo ON vo.id = fo.option_id AND fo.variant_id = vo.variant_id 
+	LEFT JOIN variants v ON vo.variant_id = v.id
+WHERE
+	p.store_id = $1
+  AND p.is_archived = false
+  AND ($2::text IS NULL OR p.category_id = $2)
+  AND ($3::boolean IS NULL OR p.is_featured = $3)
+  AND ($4::text IS NULL OR p.name ILIKE '%' || $4 || '%' OR p.description ILIKE '%' || $4 || '%')
+GROUP BY p.id
+LIMIT COALESCE($6::integer, 12)
+OFFSET COALESCE($5::integer, 0)
+`
+
+type GetFilteredProductsForStoreParams struct {
+	StoreID    pgtype.Text     `json:"store_id"`
+	CategoryID pgtype.Text     `json:"category_id"`
+	IsFeatured pgtype.Bool     `json:"is_featured"`
+	Search     pgtype.Text     `json:"search"`
+	Offset     pgtype.Int4     `json:"offset"`
+	Limit      pgtype.Int4     `json:"limit"`
+	Variants   json.RawMessage `json:"variants"`
+}
+
+type GetFilteredProductsForStoreRow struct {
+	ID              string          `json:"id"`
+	Name            string          `json:"name"`
+	Description     pgtype.Text     `json:"description"`
+	Rating          pgtype.Float8   `json:"rating"`
+	IsFeatured      pgtype.Bool     `json:"is_featured"`
+	IsArchived      pgtype.Bool     `json:"is_archived"`
+	HasVariants     pgtype.Bool     `json:"has_variants"`
+	CategoryID      string          `json:"category_id"`
+	Variants        json.RawMessage `json:"variants"`
+	ProductVariants interface{}     `json:"product_variants"`
+}
+
+func (q *Queries) GetFilteredProductsForStore(ctx context.Context, arg GetFilteredProductsForStoreParams) ([]GetFilteredProductsForStoreRow, error) {
+	rows, err := q.db.Query(ctx, getFilteredProductsForStore,
+		arg.StoreID,
+		arg.CategoryID,
+		arg.IsFeatured,
+		arg.Search,
+		arg.Offset,
+		arg.Limit,
+		arg.Variants,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFilteredProductsForStoreRow
+	for rows.Next() {
+		var i GetFilteredProductsForStoreRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Rating,
+			&i.IsFeatured,
+			&i.IsArchived,
+			&i.HasVariants,
+			&i.CategoryID,
+			&i.Variants,
+			&i.ProductVariants,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET name = $2, description = $3, rating = $4, is_featured = $5, is_archived = $6, has_variants = $7, category_id = $8, variants = $9, updated_at = $10

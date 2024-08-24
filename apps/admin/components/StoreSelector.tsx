@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useStore } from '@/lib/store/useStore'
+import { useStoreData } from '@/lib/store/useStoreData'
 import CreateStoreModal from './modals/CreateStoreModal'
 import { useEffect } from "react"
 
@@ -29,7 +29,7 @@ interface Store {
 const StoreSelector = () => {
   const [open, setOpen] = React.useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false)
-  const { stores, selectedStore, setSelectedStore, fetchStores } = useStore()
+  const { stores, selectedStore, setSelectedStore, fetchStores } = useStoreData()
 
   useEffect(() => {
     console.log('Selected Store Updated:', selectedStore)

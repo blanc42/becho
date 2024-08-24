@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useStore } from '@/lib/store/useStore'
+import { useStoreData } from '@/lib/store/useStoreData'
 
 interface CreateStoreModalProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ interface CreateStoreModalProps {
 const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ isOpen, onClose }) => {
   const [storeName, setStoreName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { addStore } = useStore()
+  const { addStore } = useStoreData()
 
   const handleCreateStore = async () => {
     if (storeName) {

@@ -146,7 +146,7 @@ func (q *Queries) GetAllCategories(ctx context.Context, storeID string) ([]GetAl
 const getAllCategoriesRecursive = `-- name: GetAllCategoriesRecursive :many
 WITH RECURSIVE category_tree AS (
     -- Base case: Select root categories (those without a parent)
-    SELECT 
+    SELECT
         c.id,
         c.name,
         c.description,
