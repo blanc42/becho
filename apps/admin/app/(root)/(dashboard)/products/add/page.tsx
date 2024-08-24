@@ -26,11 +26,13 @@ import { useStoreData } from '@/lib/store/useStoreData';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import LoadingPage from '@/components/pages/LoadingPage';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function AddProductPage() {
   const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
   const [categoryVariants, setCategoryVariants] = useState<Variant[]>([]);
-  const [removedOptions, setRemovedOptions] = useState<{[key: string]: {id: string, value: string}[]}>({});
+  const [removedOptions, setRemovedOptions] = useState<{ [key: string]: { id: string, value: string }[] }>({});
   const [removedCombinations, setRemovedCombinations] = useState<Record<string, string>[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -101,20 +103,20 @@ export default function AddProductPage() {
     // Handle form submission
     setIsSubmitting(true);
     try {
-      if(selectedStore) {
+      if (selectedStore) {
         const response = await fetch(`/api/v1/stores/${selectedStore.id}/products`, {
           method: 'POST',
           body: JSON.stringify(data),
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to submit form');
-      }
-      const json = await response.json();
-      console.log(json);
-      toast({
-        title: 'Product created',
-        description: `Product ${json.id} created successfully`,
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to submit form');
+        }
+        const json = await response.json();
+        console.log(json);
+        toast({
+          title: 'Product created',
+          description: `Product ${json.id} created successfully`,
         });
       }
       router.push(`/products`);
@@ -142,7 +144,7 @@ export default function AddProductPage() {
         }));
         return [...nonCategoryVariants, ...updatedCategoryVariants];
       });
-      
+
       // Update removedOptions for category variants
       newCategoryVariants.forEach(variant => {
         setRemovedOptions(prev => ({
@@ -150,12 +152,19 @@ export default function AddProductPage() {
           [variant.id]: variant.options.slice(1)
         }));
       });
+    } else {
+      // If category is deselected, move category variants to selected variants
+      setSelectedVariants(prevVariants => [
+        ...prevVariants,
+        ...categoryVariants.filter(cv => !prevVariants.some(pv => pv.id === cv.id))
+      ]);
+      setCategoryVariants([]);
     }
     form.setValue('category_id', categoryId);
   };
 
   const handleDeleteVariantOption = (variantId: string, optionId: string) => {
-    setSelectedVariants(prevVariants => 
+    setSelectedVariants(prevVariants =>
       prevVariants.map(variant => {
         if (variant.id === variantId) {
           if (categoryVariants.some(cv => cv.id === variantId) && variant.options.length <= 1) {
@@ -182,11 +191,11 @@ export default function AddProductPage() {
     );
   };
 
-  
+
   const handleAddVariantOption = (variantId: string, option: any) => {
-    setSelectedVariants(prevVariants => 
-      prevVariants.map(variant => 
-        variant.id === variantId 
+    setSelectedVariants(prevVariants =>
+      prevVariants.map(variant =>
+        variant.id === variantId
           ? { ...variant, options: [...variant.options, option] }
           : variant
       )
@@ -223,12 +232,12 @@ export default function AddProductPage() {
 
   const generateCombinations = useCallback((variants: Variant[]): Record<string, string>[] => {
     const combinations: Record<string, string>[] = [{}];
-    
+
     variants.forEach(variant => {
       const newCombinations: Record<string, string>[] = [];
       combinations.forEach(combo => {
         variant.options.forEach(option => {
-          newCombinations.push({...combo, [variant.id]: option.id});
+          newCombinations.push({ ...combo, [variant.id]: option.id });
         });
       });
       combinations.splice(0, combinations.length, ...newCombinations);
@@ -265,18 +274,31 @@ export default function AddProductPage() {
     });
   }, [fields, form]);
 
+  const generateSKU = () => {
+    return `sku-${Math.floor(100000000 + Math.random() * 900000000)}`;
+  };
+
   useEffect(() => {
     const combinations = generateCombinations(selectedVariants);
-    const newItems = combinations.map(combo => ({
-      sku: Object.values(combo).join('-'),
-      quantity: 0,
-      price: 0,
-      cost_price: 0,
-      discounted_price: 0,
-      variant_options: combo,
-    }));
+    const currentItems = form.getValues('items');
+    const newItems = combinations.map(combo => {
+      const existingItem = currentItems.find(item =>
+        Object.entries(combo).every(([key, value]) => item.variant_options[key] === value)
+      );
+      if (existingItem) {
+        return existingItem;
+      }
+      return {
+        sku: generateSKU(),
+        quantity: 0,
+        price: 0,
+        cost_price: 0,
+        discounted_price: 0,
+        variant_options: combo,
+      };
+    });
     replace(newItems.length > 0 ? newItems : [{
-      sku: '',
+      sku: generateSKU(),
       quantity: 0,
       price: 0,
       cost_price: 0,
@@ -288,7 +310,9 @@ export default function AddProductPage() {
   }, [selectedVariants, replace, form, generateCombinations]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className='w-full'>
+      <LoadingPage />
+    </div>
   }
 
   return (
@@ -302,181 +326,261 @@ export default function AddProductPage() {
           </Link>
         </Button>
       </div>
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Product Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter product name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Enter product description" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="is_featured"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Featured Product</FormLabel>
-                <FormDescription>
-                  Check this if the product should be featured
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="is_archived"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Archived</FormLabel>
-                <FormDescription>
-                  Check this if the product is archived
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="category_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <FormControl>
-                <CategorySingleSelector
-                  categories={categories}
-                  value={field.value}
-                  onChange={handleCategoryChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div>
-          <FormLabel>Variants</FormLabel>
-          <VariantMultiSelector
-            variants={variants}
-            selectedVariants={selectedVariants}
-            onVariantSelect={handleVariantSelect}
-            categoryVariants={categoryVariants}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Product Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter product name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {selectedVariants.map((variant) => (
-            <div key={variant.id} className="flex flex-col mt-4 p-4 border rounded">
-              <span className="font-bold mb-2">{variant.name}</span>
-              <div className="flex flex-wrap gap-2">
-                {variant.options.map((option) => (
-                  <Tag key={option.id} variant="default" size="md">
-                    <TagLabel className="text-base">{option.value}</TagLabel>
-                    {(variant.options.length > 1 || !categoryVariants.some(cv => cv.id === variant.id)) && (
-                      <TagCloseButton onClick={() => handleDeleteVariantOption(variant.id, option.id)} />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Enter product description" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="space-y-4 md:space-y-0 md:flex md:space-x-4">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <FormField
+                    control={form.control}
+                    name="is_featured"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Featured Product</FormLabel>
+                      </FormItem>
                     )}
-                  </Tag>
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Check this if the product should be featured</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <FormField
+                    control={form.control}
+                    name="is_archived"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Archived</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Check this if the product is archived</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <FormField
+            control={form.control}
+            name="category_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <CategorySingleSelector
+                    categories={categories}
+                    value={field.value}
+                    onChange={handleCategoryChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div>
+            <VariantMultiSelector
+              variants={variants}
+              selectedVariants={selectedVariants}
+              onVariantSelect={handleVariantSelect}
+              categoryVariants={categoryVariants}
+            />
+            {selectedVariants.map((variant) => (
+              <div key={variant.id} className="flex flex-col mt-4 p-4 border rounded">
+                <div className="flex flex-wrap gap-2">
+                  {variant.options.map((option) => (
+                    <Tag key={option.id} variant="default" size="md">
+                      <TagLabel className="text-base">{option.value}</TagLabel>
+                      {(variant.options.length > 1 || !categoryVariants.some(cv => cv.id === variant.id)) && (
+                        <TagCloseButton onClick={() => handleDeleteVariantOption(variant.id, option.id)} />
+                      )}
+                    </Tag>
+                  ))}
+                </div>
+                {removedOptions[variant.id] && removedOptions[variant.id].length > 0 && (
+                  <div className="mt-2">
+                    <span className="text-sm font-semibold">Removed options:</span>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {removedOptions[variant.id].map((option) => (
+                        <Button
+                          key={option.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddVariantOption(variant.id, option)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          {option.value}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {selectedVariants.length > 0 ? (
+            <div>
+              <FormLabel>Product Variants</FormLabel>
+              <div className="space-y-4 overflow-x-auto">
+                <div className="grid grid-cols-7 gap-4 font-bold min-w-[800px]">
+                  <div>Variants</div>
+                  <div>SKU</div>
+                  <div>Quantity</div>
+                  <div>Cost Price</div>
+                  <div>Price</div>
+                  <div>Discounted Price</div>
+                  <div className="text-right">Actions</div>
+                </div>
+                {fields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-7 gap-4 items-center min-w-[800px]">
+                    <div>
+                      {Object.entries(field.variant_options).map(([variantId, optionId]) => {
+                        const variant = selectedVariants.find(v => v.id === variantId);
+                        const option = variant?.options.find(o => o.id === optionId);
+                        return option?.value;
+                      }).join(', ')}
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.sku`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.quantity`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                              onFocus={e => e.target.select()}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.cost_price`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                              onFocus={e => e.target.select()}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.price`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                              onFocus={e => e.target.select()}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.discounted_price`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                              onFocus={e => e.target.select()}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <div className="text-right">
+                      <Button type="button" variant="ghost" onClick={() => handleRemoveCombination(index)} className="p-1">
+                        <Trash2 className="h-3 w-5" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
-              {removedOptions[variant.id] && removedOptions[variant.id].length > 0 && (
-                <div className="mt-2">
-                  <span className="text-sm font-semibold">Removed options:</span>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {removedOptions[variant.id].map((option) => (
-                      <Button
-                        key={option.id}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddVariantOption(variant.id, option)}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        {option.value}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          ))}
-        </div>
-
-        <div>
-          <FormLabel>Product Items</FormLabel>
-          <div className="space-y-4 overflow-x-auto">
-            <div className="grid grid-cols-7 gap-4 font-bold min-w-[800px]">
-              <div>Variants</div>
-              <div>SKU</div>
-              <div>
-                Quantity
-                {/* <Button type="button" size="sm" onClick={() => handleSetAllPrices('quantity')}>Set All</Button> */}
-              </div>
-              <div>
-                Price
-                {/* <Button type="button" size="sm" onClick={() => handleSetAllPrices('price')}>Set All</Button> */}
-              </div>
-              <div>
-                Cost Price
-                {/* <Button type="button" size="sm" onClick={() => handleSetAllPrices('cost_price')}>Set All</Button> */}
-              </div>
-              <div>
-                Discounted Price
-                {/* <Button type="button" size="sm" onClick={() => handleSetAllPrices('discounted_price')}>Set All</Button> */}
-              </div>
-              <div>Actions</div>
-            </div>
-            {fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-7 gap-4 items-center min-w-[800px]">
-                <div>
-                  {Object.entries(field.variant_options).map(([variantId, optionId]) => {
-                    const variant = selectedVariants.find(v => v.id === variantId);
-                    const option = variant?.options.find(o => o.id === optionId);
-                    return (
-                      <div key={variantId} className="text-sm">
-                        {variant?.name}: {option?.value}
-                      </div>
-                    );
-                  })}
-                </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name={`items.${index}.sku`}
+                  name="items.0.sku"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>SKU</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -485,88 +589,108 @@ export default function AddProductPage() {
                 />
                 <FormField
                   control={form.control}
-                  name={`items.${index}.quantity`}
+                  name="items.0.quantity"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Quantity</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                          onFocus={e => e.target.select()}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name={`items.${index}.price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`items.${index}.cost_price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`items.${index}.discounted_price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <div>
-                <Button type="button" variant="ghost" onClick={() => handleRemoveCombination(index)} className="p-1">
-                  <Trash2 className="h-3 w-5" />
-                </Button>
-                </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {removedCombinations.length > 0 && (
-          <div>
-            <FormLabel>Removed Combinations</FormLabel>
-            <div className="space-y-2">
-              {removedCombinations.map((combination, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <Button type="button" variant="outline" onClick={() => handleAddCombination(combination)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add
-                  </Button>
-                  <span>
-                    {Object.entries(combination).map(([variantId, optionId]) => {
-                      const variant = selectedVariants.find(v => v.id === variantId);
-                      const option = variant?.options.find(o => o.id === optionId);
-                      return `${variant?.name}: ${option?.value}`;
-                    }).join(', ')}
-                  </span>
-                </div>
-              ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="items.0.cost_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost Price</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                          onFocus={e => e.target.select()}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="items.0.price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                          onFocus={e => e.target.select()}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="items.0.discounted_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discounted Price</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                          onFocus={e => e.target.select()}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <Button type="submit" disabled={isSubmitting}>
-          {
-            isSubmitting ? 'Creating Product...' : 'Create Product'
-          }
-        </Button>
-      </form>
-    </Form>
+          {removedCombinations.length > 0 && (
+            <div>
+              <FormLabel>Removed Combinations</FormLabel>
+              <div className="space-y-2">
+                {removedCombinations.map((combination, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <Button type="button" variant="outline" onClick={() => handleAddCombination(combination)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add
+                    </Button>
+                    <span>
+                      {Object.entries(combination).map(([variantId, optionId]) => {
+                        const variant = selectedVariants.find(v => v.id === variantId);
+                        const option = variant?.options.find(o => o.id === optionId);
+                        return `${variant?.name}: ${option?.value}`;
+                      }).join(', ')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Button type="submit" disabled={isSubmitting}>
+            {
+              isSubmitting ? 'Creating Product...' : 'Create Product'
+            }
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }

@@ -1,6 +1,5 @@
-// components/CategorySingleSelector.tsx
 import React, { useState } from 'react';
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +28,11 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
 
   const selectedCategory = categories.find(category => category.id === value);
 
+  const handleDeselect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange("");
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild className='max-w-sm'>
@@ -38,7 +42,17 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {selectedCategory ? selectedCategory.name : "Select parent category..."}
+          {selectedCategory ? (
+            <div className="flex items-center justify-between w-full">
+              <span>{selectedCategory.name}</span>
+              <X
+                className="h-4 w-4 opacity-50 hover:opacity-100"
+                onClick={handleDeselect}
+              />
+            </div>
+          ) : (
+            "Select parent category..."
+          )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -46,7 +60,6 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
         <Command className='w-sm'>
           <CommandInput placeholder="Search category..." />
           <CommandList>
-
             <CommandEmpty>No category found.</CommandEmpty>
             <CommandGroup>
               {categories.map((category) => (
@@ -65,7 +78,6 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
                     )}
                   />
                   <span className={`${category.level === 0 ? 'font-semibold' : ''}`}>
-
                   {category.name}
                   </span>
                 </CommandItem>

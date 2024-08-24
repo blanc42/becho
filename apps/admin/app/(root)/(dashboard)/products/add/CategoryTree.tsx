@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect } from 'react'
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,8 +28,6 @@ interface TreeComboboxProps {
     categories: Category[]
 }
 
-
-
 const TreeCombobox: React.FC<TreeComboboxProps> = ({ categories }) => {
     const [open, setOpen] = React.useState(false)
     const [value, setValue] = React.useState<string>("")
@@ -37,6 +35,11 @@ const TreeCombobox: React.FC<TreeComboboxProps> = ({ categories }) => {
     useEffect(() => {
         console.log("====> categories ", categories)
     }, [categories])
+
+    const handleDeselect = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setValue("")
+    }
 
     return (
         <>
@@ -49,7 +52,15 @@ const TreeCombobox: React.FC<TreeComboboxProps> = ({ categories }) => {
                         className="w-[200px] justify-between"
                     >
                         {value
-                            ? categories?.find((category) => category?.id === value)?.label
+                            ? (
+                                <div className="flex items-center justify-between w-full">
+                                    <span>{categories?.find((category) => category?.id === value)?.label}</span>
+                                    <X
+                                        className="h-4 w-4 opacity-50 hover:opacity-100"
+                                        onClick={handleDeselect}
+                                    />
+                                </div>
+                            )
                             : "Select category..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
