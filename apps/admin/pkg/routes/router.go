@@ -69,34 +69,18 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 	// Admin routes
 	admin := protected.Group("/")
 	admin.Use(middleware.AdminMiddleware())
-	{
-		admin.GET("/user", u.GetUser)
-		admin.POST("/logout", u.Logout)
-		admin.POST("/stores", s.CreateStore)
-		stores := admin.Group("/stores")
-		{
-			// stores.POST("/", s.CreateStore)
-			stores.PUT("/:store_id", s.UpdateStore)
-			stores.DELETE("/:store_id", s.DeleteStore)
-			stores.GET("/", s.ListStores)
-
-			categories := stores.Group("/:store_id/categories")
-			{
-				categories.POST("/", c.CreateCategory)
-				categories.PUT("/:category_id", c.UpdateCategory)
-				categories.DELETE("/:category_id", c.DeleteCategory)
-			}
-
-			variants := stores.Group("/:store_id/variants")
-			{
-				variants.GET("/", v.ListVariants)
-				variants.POST("/", v.CreateVariant)
-				variants.PUT("/:variant_id", v.UpdateVariant)
-				variants.DELETE("/:variant_id", v.DeleteVariant)
-			}
-
-		}
-
-	}
+	admin.GET("/user", u.GetUser)
+	admin.POST("/logout", u.Logout)
+	admin.POST("/stores", s.CreateStore)
+	admin.PUT("/stores/:store_id", s.UpdateStore)
+	admin.DELETE("/stores/:store_id", s.DeleteStore)
+	admin.GET("/stores", s.ListStores)
+	admin.POST("/stores/:store_id/categories", c.CreateCategory)
+	admin.PUT("/stores/:store_id/categories/:category_id", c.UpdateCategory)
+	admin.DELETE("/stores/:store_id/categories/:category_id", c.DeleteCategory)
+	admin.GET("/stores/:store_id/variants", v.ListVariants)
+	admin.POST("/stores/:store_id/variants", v.CreateVariant)
+	admin.PUT("/stores/:store_id/variants/:variant_id", v.UpdateVariant)
+	admin.DELETE("/stores/:store_id/variants/:variant_id", v.DeleteVariant)
 
 }
