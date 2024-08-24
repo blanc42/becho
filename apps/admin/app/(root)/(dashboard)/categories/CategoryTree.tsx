@@ -41,7 +41,7 @@ export default function CategoryTree({ categories, parentId = null }: { categori
   return (
     <ul className="pl-4">
       {filteredCategories.map(category => (
-        <li key={category.id} className="mb-2 hover:bg-gray-800">
+        <li key={category.id} className="mb-2 hover:dark:bg-gray-800 hover:bg-gray-200">
           <div className="flex items-center justify-between group">
             <div className="flex items-center">
               <Button

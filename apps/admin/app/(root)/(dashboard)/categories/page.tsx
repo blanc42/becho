@@ -6,6 +6,7 @@ import CategoryTree from "./CategoryTree";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusSquareIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Category {
   id: string;
@@ -21,18 +22,24 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { selectedStore } = useStoreData();
+  const router = useRouter();
+
 
   useEffect(() => {
     setIsLoading(true);
     const fetchCategories = async () => {
       if (selectedStore) {
         try {
-          const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch categories');
+          if (selectedStore) {
+            const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`);
+            if (!response.ok) {
+              throw new Error('Failed to fetch categories');
+            }
+            const data = await response.json();
+            setCategories(data);
+          } else {
+            router.push('/');
           }
-          const data = await response.json();
-          setCategories(data);
         } catch (error) {
           console.error('Error fetching categories:', error);
         } finally {

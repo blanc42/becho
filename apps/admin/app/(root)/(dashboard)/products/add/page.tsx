@@ -21,10 +21,11 @@ import CategorySingleSelector from '@/components/CategoryTree';
 import VariantMultiSelector from '@/components/VariantMultiSelector';
 import { Tag, TagLabel, TagCloseButton } from "@/components/ui/tag";
 import { Variant, Category } from "@/lib/types";
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, PlusSquareIcon, ArrowLeft } from 'lucide-react';
 import { useStoreData } from '@/lib/store/useStoreData';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function AddProductPage() {
   const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
@@ -291,6 +292,16 @@ export default function AddProductPage() {
   }
 
   return (
+    <div className="p-4 w-full max-w-screen-xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Add Product</h1>
+        <Button asChild>
+          <Link href="/products">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Link>
+        </Button>
+      </div>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
@@ -556,5 +567,6 @@ export default function AddProductPage() {
         </Button>
       </form>
     </Form>
+    </div>
   );
 }

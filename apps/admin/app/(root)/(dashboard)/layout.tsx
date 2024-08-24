@@ -30,7 +30,7 @@ export default function DashboardLayout({
   return (
     <div className="flex w-full min-h-screen flex-col">
       <Navbar />
-      <div className='flex w-full flex-col p-4 px-2 md:px-20'>
+      <div className='flex w-full p-4 px-2 md:px-20'>
         {children}
       </div>
     </div>

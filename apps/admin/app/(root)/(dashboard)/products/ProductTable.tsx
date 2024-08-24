@@ -41,7 +41,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
             <TableHead>Category</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Quantity</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -51,7 +51,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
               <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
               <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
               <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
-              <TableCell><Skeleton className="h-8 w-[120px]" /></TableCell>
+              <TableCell><Skeleton className="h-8 w-[120px] ml-auto" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -67,7 +67,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
           <TableHead>Category</TableHead>
           <TableHead>Price</TableHead>
           <TableHead>Quantity</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -86,7 +86,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
                 : 'N/A'}
             </TableCell>
             <TableCell>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 justify-end">
                 <Button variant="ghost" size="sm" onClick={() => onPreview(product)}>
                   <Eye className="w-4 h-4" />
                 </Button>

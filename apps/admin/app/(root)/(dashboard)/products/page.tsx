@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStoreData } from '@/lib/store/useStoreData';
 import ProductTable from './ProductTable';
 import { Button } from "@/components/ui/button";
-import { Plus } from 'lucide-react';
+import { Plus, PlusSquareIcon } from 'lucide-react';
 import Link from 'next/link';
 
 interface Product {
@@ -61,12 +61,12 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 w-full max-w-screen-xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Products</h1>
         <Button asChild>
           <Link href="/products/add">
-            <Plus className="w-4 h-4 mr-2" />
+            <PlusSquareIcon className="w-4 h-4 mr-2" />
             Add Product
           </Link>
         </Button>

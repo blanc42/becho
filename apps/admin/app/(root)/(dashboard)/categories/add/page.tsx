@@ -20,7 +20,9 @@ import VariantMultiSelector from '@/components/VariantMultiSelector';
 import { createCategorySchema, CreateCategoryType } from '@/lib/schema';
 import { Category, Variant } from '@/lib/types';
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
 
 export default function CategoryAddPage() {
     const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
@@ -29,6 +31,7 @@ export default function CategoryAddPage() {
     const [variants, setVariants] = useState<Variant[]>([]);
     const { selectedStore } = useStoreData();
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     const form = useForm<CreateCategoryType>({
         resolver: zodResolver(createCategorySchema),
@@ -77,24 +80,28 @@ export default function CategoryAddPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...values,
-                    variants: [...categoryVariants, ...selectedVariants].map(v => v.id),
-                }),
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to create category');
+            if (selectedStore) {
+                const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...values,
+                        variants: [...categoryVariants, ...selectedVariants].map(v => v.id),
+                    }),
+                    credentials: 'include'
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to create category');
+                }
+                toast({
+                    title: `Category created successfully`,
+                    description: "Category created successfully",
+                });
+                router.push(`/categories`);
             }
-
-            console.log('Category created successfully');
-            // Reset form or redirect
         } catch (error) {
             console.error('Error creating category:', error);
         } finally {
@@ -134,8 +141,14 @@ export default function CategoryAddPage() {
     };
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold">Create Category</h1>
+        <div className="space-y-6 max-w-screen-lg w-full mx-auto">
+            <div className="flex items-center justify-between my-10">
+            <h1 className="text-2xl md:text-3xl font-bold">Create Category</h1>
+            <Button size="sm" onClick={() => router.back()}>
+                <ArrowLeft className="w-4 h-4" />
+                Back
+            </Button>
+            </div>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     <FormField
