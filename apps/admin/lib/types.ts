@@ -1,27 +1,36 @@
 import {z} from "zod"
 
-interface Variant {
-    id: string
-    name: string
-    label : string
-    options: VariantOption[]
+export interface Variant {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    name: string;
+    label: string;
+    description: string;
+    store_id: string;
+    options: VariantOption[];
 }
 
-interface VariantOption {
-    id: string
-    value: string
-    image_url: string
-    data: string
-  }
+export interface VariantOption {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    variant_id: string;
+    value: string;
+    display_order: number;
+    data: string;
+    image_id: string | null;
+}
 
-interface Category {
-  id: string
-  name: string
-  description: string | null
-  parent_id: string | null
-  variants: string[]
-  level: number
-  subCategories?: Category[]
+export interface Category {
+    id: string;
+    name: string;
+    description: string;
+    level: number;
+    parent_id: string | null;
+    unique_identifier: string;
+    variants: string[];
+    subCategories?: Category[];
 }
 
 const VariantOptionSchema = z.record(z.string(), z.string());
@@ -49,5 +58,5 @@ const ProductSchema = z.object({
 type ProductFormValues = z.infer<typeof ProductSchema>
 
 
-export type { Variant, Category, ProductFormValues }
+export type { ProductFormValues }
 export { ProductSchema }

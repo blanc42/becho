@@ -31,7 +31,7 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild className='max-w-sm'>
         <Button
           variant="outline"
           role="combobox"
@@ -42,8 +42,8 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
+      <PopoverContent className="w-full p-0 max-w-sm">
+        <Command className='w-sm'>
           <CommandInput placeholder="Search category..." />
           <CommandList>
 
@@ -56,6 +56,7 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
                     onChange(category.id);
                     setOpen(false);
                   }}
+                  style={{marginLeft: `${category.level * 16}px`}}
                 >
                   <Check
                     className={cn(
@@ -63,7 +64,10 @@ export default function CategorySingleSelector({ categories, value, onChange }: 
                       value === category.id ? "opacity-100" : "opacity-0"
                     )}
                   />
+                  <span className={`${category.level === 0 ? 'font-semibold' : ''}`}>
+
                   {category.name}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

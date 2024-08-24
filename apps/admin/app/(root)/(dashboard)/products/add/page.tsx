@@ -19,16 +19,24 @@ import {
 } from "@/components/ui/form";
 import CategorySingleSelector from '@/components/CategoryTree';
 import VariantMultiSelector from '@/components/VariantMultiSelector';
-import { categoriesData, variantsData } from '@/data/variants';
 import { Tag, TagLabel, TagCloseButton } from "@/components/ui/tag";
 import { Variant, Category } from "@/lib/types";
 import { X, Plus, Trash2 } from 'lucide-react';
+import { useStoreData } from '@/lib/store/useStoreData';
+import { toast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function AddProductPage() {
   const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
   const [categoryVariants, setCategoryVariants] = useState<Variant[]>([]);
   const [removedOptions, setRemovedOptions] = useState<{[key: string]: {id: string, value: string}[]}>({});
   const [removedCombinations, setRemovedCombinations] = useState<Record<string, string>[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { selectedStore } = useStoreData();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<createProductType>({
     resolver: zodResolver(createProductSchema),
@@ -55,19 +63,91 @@ export default function AddProductPage() {
     name: "items",
   });
 
-  const onSubmit = (data: createProductType) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      if (selectedStore) {
+        setIsLoading(true);
+        try {
+          const [categoriesResponse, variantsResponse] = await Promise.all([
+            fetch(`/api/v1/stores/${selectedStore.id}/categories`),
+            fetch(`/api/v1/stores/${selectedStore.id}/variants`)
+          ]);
+
+          if (!categoriesResponse.ok || !variantsResponse.ok) {
+            throw new Error('Failed to fetch data');
+          }
+
+          const [categoriesData, variantsData] = await Promise.all([
+            categoriesResponse.json(),
+            variantsResponse.json()
+          ]);
+
+          setCategories(categoriesData);
+          setVariants(variantsData);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [selectedStore]);
+
+  const onSubmit = async (data: createProductType) => {
     console.log(data);
     // Handle form submission
+    setIsSubmitting(true);
+    try {
+      if(selectedStore) {
+        const response = await fetch(`/api/v1/stores/${selectedStore.id}/products`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+      const json = await response.json();
+      console.log(json);
+      toast({
+        title: 'Product created',
+        description: `Product ${json.id} created successfully`,
+        });
+      }
+      router.push(`/products`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create product',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCategoryChange = (categoryId: string) => {
-    const category = categoriesData.find(c => c.id === categoryId);
+    const category = categories.find(c => c.id === categoryId);
     if (category) {
-      const newCategoryVariants = variantsData.filter(v => category.variants.includes(v.id));
+      const newCategoryVariants = variants.filter(v => category.variants.includes(v.id));
       setCategoryVariants(newCategoryVariants);
       setSelectedVariants(prevVariants => {
         const nonCategoryVariants = prevVariants.filter(v => !category.variants.includes(v.id));
-        return [...nonCategoryVariants, ...newCategoryVariants];
+        const updatedCategoryVariants = newCategoryVariants.map(variant => ({
+          ...variant,
+          options: [variant.options[0]] // Select only the first option
+        }));
+        return [...nonCategoryVariants, ...updatedCategoryVariants];
+      });
+      
+      // Update removedOptions for category variants
+      newCategoryVariants.forEach(variant => {
+        setRemovedOptions(prev => ({
+          ...prev,
+          [variant.id]: variant.options.slice(1)
+        }));
       });
     }
     form.setValue('category_id', categoryId);
@@ -117,7 +197,7 @@ export default function AddProductPage() {
   };
 
   const handleVariantSelect = (variantId: string) => {
-    const variant = variantsData.find((v) => v.id === variantId);
+    const variant = variants.find((v) => v.id === variantId);
     if (variant) {
       if (selectedVariants.some((v) => v.id === variantId)) {
         // If it's not a category variant, remove it
@@ -206,6 +286,10 @@ export default function AddProductPage() {
     setRemovedCombinations([]);
   }, [selectedVariants, replace, form, generateCombinations]);
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -287,7 +371,7 @@ export default function AddProductPage() {
               <FormLabel>Category</FormLabel>
               <FormControl>
                 <CategorySingleSelector
-                  categories={categoriesData}
+                  categories={categories}
                   value={field.value}
                   onChange={handleCategoryChange}
                 />
@@ -300,7 +384,7 @@ export default function AddProductPage() {
         <div>
           <FormLabel>Variants</FormLabel>
           <VariantMultiSelector
-            variants={variantsData}
+            variants={variants}
             selectedVariants={selectedVariants}
             onVariantSelect={handleVariantSelect}
             categoryVariants={categoryVariants}
@@ -465,7 +549,11 @@ export default function AddProductPage() {
           </div>
         )}
 
-        <Button type="submit">Create Product</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {
+            isSubmitting ? 'Creating Product...' : 'Create Product'
+          }
+        </Button>
       </form>
     </Form>
   );

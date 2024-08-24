@@ -1,24 +1,80 @@
 "use client"
-import { categoriesData } from "@/data/variants";
-import CategoryTree from "@/components/CategoryTree";
-import { Category } from "@/lib/types";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useStoreData } from "@/lib/store/useStoreData";
+import { Skeleton } from "@/components/ui/skeleton";
+import CategoryTree from "./CategoryTree";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { PlusSquareIcon } from "lucide-react";
 
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  level: number;
+  parent_id: string | null;
+  unique_identifier: string;
+  variants: string[];
+}
 
 export default function CategoriesPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { selectedStore } = useStoreData();
 
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchCategories = async () => {
+      if (selectedStore) {
+        try {
+          const response = await fetch(`/api/v1/stores/${selectedStore.id}/categories`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch categories');
+          }
+          const data = await response.json();
+          setCategories(data);
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchCategories();
+  }, [selectedStore]);
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center gap-4 mb-8 border-b pb-4">
-        <h1 className="text-2xl font-bold">Categories</h1>
-        <Button onClick={() => router.push('/categories/add')}>Add Category</Button>
+    <div className="container max-w-screen-xl">
+      <div className="flex items-baseline justify-between my-12">
+        <h1 className="text-3xl font-semibold">Categories</h1>
+        <Button asChild>
+          <Link href="/categories/add" className='flex items-center gap-2'>
+            <PlusSquareIcon width={16} height={16} />
+            Add Category
+          </Link>
+        </Button>
       </div>
-        <CategoryTree categories={categoriesData} onChange={(value) => setSelectedCategory(value)} value={selectedCategory} />
+      {isLoading ? (
+        <ul className="pl-4">
+          {[...Array(5)].map((_, index) => (
+            <li key={index} className="mb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Skeleton className="h-6 w-6 mr-2" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+                <div className="flex items-center">
+                  <Skeleton className="h-6 w-6 mr-2" />
+                  <Skeleton className="h-6 w-6" />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <CategoryTree categories={categories} />
+      )}
     </div>
-  ) 
+  )
 }

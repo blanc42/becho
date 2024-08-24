@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,32 +15,64 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoreData } from '@/lib/store/useStoreData';
-import { useCategoriesStore } from '@/lib/store/useCategoriesStore';
-import CategorySingleSelector from '@/components/CategoryTree';
-import { Variant } from '@/lib/types';
 import CategoryTree from '@/components/CategoryTree';
-import { createCategorySchema, createCategoryType } from '@/lib/schema';
-import { categoriesData, variantsData } from '@/data/variants';
 import VariantMultiSelector from '@/components/VariantMultiSelector';
-
-
+import { createCategorySchema, CreateCategoryType } from '@/lib/schema';
+import { Category, Variant } from '@/lib/types';
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 
 export default function CategoryAddPage() {
     const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
+    const [categoryVariants, setCategoryVariants] = useState<Variant[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [variants, setVariants] = useState<Variant[]>([]);
     const { selectedStore } = useStoreData();
     const [isLoading, setIsLoading] = useState(false);
 
-    const form = useForm<createCategoryType>({
+    const form = useForm<CreateCategoryType>({
         resolver: zodResolver(createCategorySchema),
         defaultValues: {
             name: '',
             description: '',
-            parentCategoryId: '',
+            parent_id: null,
             variants: [],
+            unique_identifier: '',
         },
     });
 
-    const onSubmit = async (values: createCategoryType) => {
+    useEffect(() => {
+        if (selectedStore) {
+            fetchCategories();
+            fetchVariants();
+        }
+    }, [selectedStore]);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch(`/api/v1/stores/${selectedStore?.id}/categories`);
+            if (response.ok) {
+                const data = await response.json();
+                setCategories(data);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    const fetchVariants = async () => {
+        try {
+            const response = await fetch(`/api/v1/stores/${selectedStore?.id}/variants`);
+            if (response.ok) {
+                const data = await response.json();
+                setVariants(data);
+            }
+        } catch (error) {
+            console.error('Error fetching variants:', error);
+        }
+    };
+
+    const onSubmit = async (values: CreateCategoryType) => {
         if (!selectedStore) return;
         setIsLoading(true);
 
@@ -51,7 +82,10 @@ export default function CategoryAddPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(values),
+                body: JSON.stringify({
+                    ...values,
+                    variants: [...categoryVariants, ...selectedVariants].map(v => v.id),
+                }),
                 credentials: 'include'
             });
 
@@ -59,9 +93,8 @@ export default function CategoryAddPage() {
                 throw new Error('Failed to create category');
             }
 
-
-            console.log({...values, variants: selectedVariants.map(v => v.id)})
             console.log('Category created successfully');
+            // Reset form or redirect
         } catch (error) {
             console.error('Error creating category:', error);
         } finally {
@@ -70,7 +103,7 @@ export default function CategoryAddPage() {
     };
 
     const handleVariantSelect = (variantId: string) => {
-        const variant = variantsData.find(v => v.id === variantId);
+        const variant = variants.find(v => v.id === variantId);
         if (variant) {
             setSelectedVariants(prev => {
                 const isSelected = prev.some(v => v.id === variantId);
@@ -81,6 +114,23 @@ export default function CategoryAddPage() {
                 }
             });
         }
+    };
+
+    const handleCategorySelect = (categoryId: string | null) => {
+        if (categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (category) {
+                const categoryVariants = variants.filter(v => category.variants.includes(v.id));
+                setCategoryVariants(categoryVariants);
+            }
+        } else {
+            setCategoryVariants([]);
+        }
+        form.setValue('parent_id', categoryId);
+    };
+
+    const removeSelectedVariant = (variantId: string) => {
+        setSelectedVariants(prev => prev.filter(v => v.id !== variantId));
     };
 
     return (
@@ -118,12 +168,30 @@ export default function CategoryAddPage() {
 
                     <FormField
                         control={form.control}
-                        name="parentCategoryId"
+                        name="unique_identifier"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Unique Identifier</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Unique identifier" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="parent_id"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Parent Category</FormLabel>
                                 <FormControl className='w-full'>
-                                    <CategoryTree categories={categoriesData} value={field.value} onChange={field.onChange} />
+                                    <CategoryTree 
+                                        categories={categories} 
+                                        value={field.value} 
+                                        onChange={(value) => handleCategorySelect(value)}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -138,16 +206,36 @@ export default function CategoryAddPage() {
                                 <FormLabel>Variants</FormLabel>
                                 <FormControl>
                                     <VariantMultiSelector
-                                        variants={variantsData}
-                                        selectedVariants={selectedVariants}
+                                        variants={variants}
+                                        selectedVariants={[...categoryVariants, ...selectedVariants]}
                                         onVariantSelect={handleVariantSelect}
-                                        categoryVariants={[]}
+                                        categoryVariants={categoryVariants}
                                     />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+
+                    <div>
+                        <h3 className="text-sm font-medium mb-2">Selected Variants:</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {categoryVariants.map(variant => (
+                                <Badge key={variant.id} variant="secondary">
+                                    {variant.name}
+                                </Badge>
+                            ))}
+                            {selectedVariants.map(variant => (
+                                <Badge key={variant.id} variant="secondary" className="flex items-center gap-1">
+                                    {variant.name}
+                                    <X 
+                                        className="h-3 w-3 cursor-pointer" 
+                                        onClick={() => removeSelectedVariant(variant.id)}
+                                    />
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
 
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? 'Creating...' : 'Create Category'}

@@ -1,19 +1,36 @@
 import { z } from "zod";
 
-const createCategorySchema = z.object({
-    name: z.string().min(2, 'Category Name is required'),
-    description: z.string().optional(),
-    parentCategoryId: z.string().nullable(),
-    variants: z.array(z.string()),
-  });
+export const createCategorySchema = z.object({
+  name: z.string().min(2, 'Category Name is required'),
+  description: z.string().optional(),
+  parent_id: z.string().nullable(),
+  variants: z.array(z.string()),
+  unique_identifier: z.string().min(2, 'Unique identifier is required'),
+});
 
+export const variantSchema = z.object({
+  id: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  name: z.string(),
+  label: z.string(),
+  description: z.string(),
+  store_id: z.string(),
+  options: z.array(z.object({
+      id: z.string(),
+      created_at: z.string(),
+      updated_at: z.string(),
+      variant_id: z.string(),
+      value: z.string(),
+      display_order: z.number(),
+      data: z.string(),
+      image_id: z.string().nullable(),
+  })),
+});
 
-  const variantSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    label: z.string(),
-    options: z.array(z.string()).min(1, 'At least one option is required'),
-  });
+export type CreateCategoryType = z.infer<typeof createCategorySchema>;
+export type VariantType = z.infer<typeof variantSchema>;
+
 
   const variantOptionSchema = z.object({
     id: z.string(),
@@ -50,5 +67,5 @@ const createCategorySchema = z.object({
   type variantOptionType = z.infer<typeof variantOptionSchema>
   type itemType = z.infer<typeof itemSchema>
 
-  export { createCategorySchema, createProductSchema, variantSchema, variantOptionSchema, itemSchema }
-  export type { createCategoryType, createProductType, variantType, variantOptionType, itemType }
+  export { createProductSchema, variantOptionSchema, itemSchema }
+  export type { createProductType, variantOptionType, itemType }

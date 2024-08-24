@@ -161,12 +161,13 @@ func (c *categoryUseCase) GetAllCategoriesRecursive(ctx context.Context, storeID
 		return []*response.CategoryTreeNode{}, nil
 	}
 
-	// Create a map to store categories by their ID for quick lookup
-	categoryMap := make(map[string]*response.CategoryTreeNode)
-	for _, category := range categories {
+	categoryMap := make(map[string][]*response.CategoryTreeNode)
+	var rootCategories []*response.CategoryTreeNode
+
+	for _, cat := range categories {
 		variants := make([]string, 0)
-		if category.Variants != nil {
-			if variantSlice, ok := category.Variants.([]interface{}); ok {
+		if cat.Variants != nil {
+			if variantSlice, ok := cat.Variants.([]interface{}); ok {
 				for _, v := range variantSlice {
 					if strValue, ok := v.(string); ok {
 						variants = append(variants, strValue)
@@ -175,44 +176,39 @@ func (c *categoryUseCase) GetAllCategoriesRecursive(ctx context.Context, storeID
 			}
 		}
 
-		categoryMap[category.ID] = &response.CategoryTreeNode{
-			ID:               category.ID,
-			Name:             category.Name,
-			Description:      category.Description.String,
-			Level:            category.Level,
-			UniqueIdentifier: category.UniqueIdentifier,
-			ParentID:         category.ParentID.String,
+		node := &response.CategoryTreeNode{
+			ID:               cat.ID,
+			Name:             cat.Name,
+			Description:      cat.Description.String,
+			Level:            cat.Level,
+			UniqueIdentifier: cat.UniqueIdentifier,
 			Variants:         variants,
 		}
-	}
+		if cat.ParentID.Valid {
+			parentID := cat.ParentID.String
+			node.ParentID = &parentID
+		}
 
-	// Build the tree structure
-	var rootCategories []*response.CategoryTreeNode
-	for _, category := range categories {
-		node := categoryMap[category.ID]
-		if !category.ParentID.Valid {
-			// This is a root category
+		if cat.ParentID.String == "" {
 			rootCategories = append(rootCategories, node)
-		} else if parent, exists := categoryMap[category.ParentID.String]; exists {
-			// Add as a child to its parent
-			parent.Children = append(parent.Children, node)
+		} else {
+			categoryMap[cat.ParentID.String] = append(categoryMap[cat.ParentID.String], node)
 		}
 	}
 
-	// Limit the tree to 3 levels
-	limitTreeDepth(rootCategories, 0, 3)
+	var orderedCategories []*response.CategoryTreeNode
+	for _, root := range rootCategories {
+		appendCategoryAndChildren(root, &orderedCategories, categoryMap)
+	}
 
-	return rootCategories, nil
+	return orderedCategories, nil
 }
 
-func limitTreeDepth(nodes []*response.CategoryTreeNode, currentDepth, maxDepth int) {
-	if currentDepth >= maxDepth {
-		for i := range nodes {
-			nodes[i].Children = nil
+func appendCategoryAndChildren(cat *response.CategoryTreeNode, orderedCategories *[]*response.CategoryTreeNode, categoryMap map[string][]*response.CategoryTreeNode) {
+	*orderedCategories = append(*orderedCategories, cat)
+	if children, exists := categoryMap[cat.ID]; exists {
+		for _, child := range children {
+			appendCategoryAndChildren(child, orderedCategories, categoryMap)
 		}
-		return
-	}
-	for i := range nodes {
-		limitTreeDepth(nodes[i].Children, currentDepth+1, maxDepth)
 	}
 }

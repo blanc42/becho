@@ -86,16 +86,16 @@ export default function AddVariant() {
     <div className='flex flex-col items-center justify-center mt-12 max-w-2xl mx-auto'>
       <div className='flex items-baseline justify-between mb-6 border-b border-gray-600 py-4 w-full'>
         <h1 className="text-3xl font-semibold">Add Variant</h1>
-        <Button asChild>
+        <Button asChild size="sm">
           <Link href="/variants" className='flex items-center gap-2'>
             <MoveLeftIcon width={16} height={16} />
-            Back to Variants
+            Variants
           </Link>
         </Button>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
             <FormField
               control={form.control}
               name="name"
