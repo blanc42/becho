@@ -20,51 +20,26 @@ func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandle
 
 	e.Use(middleware.PublicMiddleware())
 	api := e.Group("/api/v1")
-	{
-		// admin login router
-		api.POST("/signup", u.CreateAdminUser)
-		api.POST("/login", u.AdminLogin)
-
-		api.GET("/stores/:store_id", s.GetStore)
-		stores := api.Group("/stores/:store_id")
-		{
-			// stores.GET("/login", u.Login)
-			stores.POST("/signup", u.CreateCustomer)
-
-			stores.GET("/products", p.GetProducts)
-			products := stores.Group("/products")
-			{
-				products.GET("/:product_id", p.GetProduct)
-				products.POST("/", p.CreateProduct)
-			}
-
-			categories := stores.Group("/categories")
-			{
-				categories.GET("/", c.GetAllCategories)
-				categories.GET("/:category_id", c.GetCategory)
-			}
-
-			variants := categories.Group("/:category_id/variants")
-			{
-				variants.GET("/:variant_id", v.GetVariant)
-				variants.GET("/", v.ListVariants)
-			}
-		}
-
-	}
+	api.POST("/signup", u.CreateAdminUser)
+	api.POST("/login", u.AdminLogin)
+	api.GET("/stores/:store_id", s.GetStore)
+	api.POST("/stores/:store_id/signup", u.CreateCustomer)
+	api.GET("/stores/:store_id/products", p.GetProducts)
+	api.GET("/stores/:store_id/products/:product_id", p.GetProduct)
+	api.POST("/stores/:store_id/products", p.CreateProduct)
+	api.GET("/stores/:store_id/categories", c.GetAllCategories)
+	api.GET("/stores/:store_id/categories/:category_id", c.GetCategory)
+	api.GET("/stores/:store_id/categories/:category_id/variants/:variant_id", v.GetVariant)
+	api.GET("/stores/:store_id/categories/:category_id/variants", v.ListVariants)
 
 	// Protected routes
 	protected := api.Group("/")
 	protected.Use(middleware.AuthMiddleware())
-	{
-		stores := protected.Group("/stores/:store_id")
-		stores.GET("/users/:user_id", u.GetUser)
-		stores.PUT("/users/:user_id", u.UpdateUser)
+	protected.GET("/stores/:store_id/users/:user_id", u.GetUser)
+	protected.PUT("/stores/:store_id/users/:user_id", u.UpdateUser)
 
-		// TODO : cart routes
-		// TODO : order routes
-
-	}
+	// TODO : cart routes
+	// TODO : order routes
 
 	// Admin routes
 	admin := protected.Group("/")
