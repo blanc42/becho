@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Variant } from "@/lib/types"
-import { variantsData } from "@/data/variants"
+import { useStoreData } from '@/lib/store/useStoreData'
 
 
 const SelectVariants = ({
@@ -29,9 +29,30 @@ const SelectVariants = ({
   setSelectedVariants: React.Dispatch<React.SetStateAction<Variant[]>>
 }) => {
   const [open, setOpen] = React.useState(false)
+  const [variantsData, setVariantsData] = React.useState<Variant[]>([]);
+  const { selectedStore } = useStoreData();
+
+  React.useEffect(() => {
+    const fetchVariants = async () => {
+      if (selectedStore) {
+        try {
+          const response = await fetch(`/api/v1/stores/${selectedStore.id}/variants`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch variants');
+          }
+          const data = await response.json();
+          setVariantsData(data);
+        } catch (error) {
+          console.error('Error fetching variants:', error);
+        }
+      }
+    };
+
+    fetchVariants();
+  }, [selectedStore]);
 
   const handleVariantSelect = (variantId: string) => {
-    const variant = variantsData.find((v) => v.id === variantId)
+    const variant = variantsData.find((v: Variant) => v.id === variantId)
     if (variant) {
       if (selectedVariants.some((v) => v.id === variantId)) {
         setSelectedVariants(
@@ -63,7 +84,7 @@ const SelectVariants = ({
           <CommandList>
             <CommandEmpty>No variants found.</CommandEmpty>
             <CommandGroup>
-              {variantsData.map((variant) => (
+              {variantsData.map((variant: Variant) => (
                 <CommandItem
                   key={variant.id}
                   value={variant.id}
