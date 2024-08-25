@@ -213,6 +213,8 @@ export default function AddProductPage() {
         // If it's not a category variant, remove it
         if (!categoryVariants.some((cv) => cv.id === variantId)) {
           setSelectedVariants(selectedVariants.filter((v) => v.id !== variantId));
+          // Clean up items after removing a variant
+          cleanUpItemsAfterVariantRemoval(variantId);
         }
       } else {
         const newVariant = {
@@ -228,6 +230,34 @@ export default function AddProductPage() {
         setSelectedVariants([...selectedVariants, newVariant]);
       }
     }
+  };
+
+  const cleanUpItemsAfterVariantRemoval = (removedVariantId: string) => {
+    const currentItems = form.getValues('items');
+    const updatedItems = currentItems.map(item => {
+      const { [removedVariantId]: removed, ...restOptions } = item.variant_options;
+      return {
+        ...item,
+        variant_options: restOptions
+      };
+    });
+
+    // Filter out items that have no variant options left
+    const filteredItems = updatedItems.filter(item => Object.keys(item.variant_options).length > 0);
+
+    // If all items were removed, keep one empty item
+    if (filteredItems.length === 0) {
+      filteredItems.push({
+        sku: generateSKU(),
+        quantity: 0,
+        price: 0,
+        cost_price: 0,
+        discounted_price: 0,
+        variant_options: {},
+      });
+    }
+
+    replace(filteredItems);
   };
 
   const generateCombinations = useCallback((variants: Variant[]): Record<string, string>[] => {
@@ -286,7 +316,10 @@ export default function AddProductPage() {
         Object.entries(combo).every(([key, value]) => item.variant_options[key] === value)
       );
       if (existingItem) {
-        return existingItem;
+        return {
+          ...existingItem,
+          variant_options: combo // Ensure we're using the current combo
+        };
       }
       return {
         sku: generateSKU(),
