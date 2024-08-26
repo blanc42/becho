@@ -24,3 +24,9 @@ RETURNING *;
 -- name: DeleteProductItem :exec
 DELETE FROM product_variants
 WHERE id = $1;
+
+
+-- name: CreateProductVariantImage :one
+INSERT INTO product_variant_images (product_variant_id, image_id, display_order)
+VALUES ($1, $2, $3)
+RETURNING *;

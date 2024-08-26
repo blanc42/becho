@@ -25,13 +25,15 @@ type productUseCase struct {
 	productRepo domain.ProductRepository
 	storeRepo   domain.StoreRepository
 	variantRepo domain.VariantRepository
+	imageRepo   domain.ImageRepository
 }
 
-func NewProductUseCase(productRepo domain.ProductRepository, storeRepo domain.StoreRepository, variantRepo domain.VariantRepository) ProductUsecase {
+func NewProductUseCase(productRepo domain.ProductRepository, storeRepo domain.StoreRepository, variantRepo domain.VariantRepository, imageRepo domain.ImageRepository) ProductUsecase {
 	return &productUseCase{
 		productRepo: productRepo,
 		storeRepo:   storeRepo,
 		variantRepo: variantRepo,
+		imageRepo:   imageRepo,
 	}
 }
 
@@ -169,6 +171,26 @@ func (u *productUseCase) CreateProduct(ctx context.Context, product request.Crea
 			})
 			if err != nil {
 				return db.GetProductRow{}, fmt.Errorf("failed to create product variant option: %w", err)
+			}
+		}
+
+		// Create product variant images
+		for _, image := range item.Images {
+			createdImage, err := u.imageRepo.CreateImage(ctx, db.CreateImageParams{
+				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				ImageID:   image,
+			})
+			if err != nil {
+				return db.GetProductRow{}, fmt.Errorf("failed to create image: %w", err)
+			}
+
+			_, err = u.productRepo.CreateProductVariantImage(ctx, db.CreateProductVariantImageParams{
+				ProductVariantID: productVariant.ID,
+				ImageID:          createdImage.ID,
+			})
+			if err != nil {
+				return db.GetProductRow{}, fmt.Errorf("failed to create product variant image: %w", err)
 			}
 		}
 	}

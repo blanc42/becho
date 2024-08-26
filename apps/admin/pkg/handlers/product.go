@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -29,12 +30,14 @@ func NewProductHandler(productUsecase usecase.ProductUsecase) ProductHandler {
 func (h *productHandler) CreateProduct(c *gin.Context) {
 	storeID := c.Param("store_id")
 	if storeID == "" {
+		log.Println("store_id is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "store_id is required"})
 		return
 	}
 
 	var req request.CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("error binding json", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -42,6 +45,7 @@ func (h *productHandler) CreateProduct(c *gin.Context) {
 
 	productID, err := h.productUsecase.CreateProduct(c, req)
 	if err != nil {
+		log.Println("error creating product", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

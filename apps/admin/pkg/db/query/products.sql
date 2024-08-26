@@ -26,7 +26,16 @@ SELECT p.*,
            'price', pv.price,
            'discounted_price', pv.discounted_price,
            'cost_price', pv.cost_price,
-           'options', pv.options
+           'options', pv.options,
+           'images', COALESCE(
+               (
+                   SELECT json_agg(json_build_object('id', i.id, 'image_id', i.image_id))
+                   FROM product_variant_images pvi
+                   JOIN images i ON i.id = pvi.image_id
+                   WHERE pvi.product_variant_id = pv.id
+               ),
+               '[]'::json
+           )
        )) FILTER (WHERE pv.id IS NOT NULL), '[]'::json) AS product_variants,
        ppi.min_price
 FROM products p
@@ -101,7 +110,16 @@ SELECT
             'sku', pv.sku,
             'price', pv.price,
             'discounted_price', pv.discounted_price,
-            'cost_price', pv.cost_price
+            'cost_price', pv.cost_price,
+            'images', COALESCE(
+                (
+                    SELECT json_agg(i.image_id)
+                    FROM product_variant_images pvi
+                    JOIN images i ON i.id = pvi.image_id
+                    WHERE pvi.product_variant_id = pv.id
+                ),
+                '[]'::json
+            )
           )
         ) FILTER (WHERE pv.id IS NOT NULL),
         '[]'::JSON
@@ -150,7 +168,17 @@ SELECT
           JSON_BUILD_OBJECT(
             'id', pv.id,
             'price', pv.price,
-            'discounted_price', pv.discounted_price
+            'discounted_price', pv.discounted_price,
+            'images', COALESCE(
+                (
+                    -- SELECT json_agg(json_build_object('id', i.id, 'image_id', i.image_id))
+                    SELECT json_agg(i.image_id)
+                    FROM product_variant_images pvi
+                    LEFT JOIN images i ON i.id = pvi.image_id
+                    WHERE pvi.product_variant_id = pv.id
+                ),
+                '[]'::json
+            )
           )
         ) FILTER (WHERE pv.id IS NOT NULL),
         '[]'::JSON

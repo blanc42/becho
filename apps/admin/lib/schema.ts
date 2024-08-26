@@ -46,20 +46,18 @@ export type VariantType = z.infer<typeof variantSchema>;
     cost_price: z.number().int().positive(),
     discounted_price: z.number().int().positive(),
     variant_options: z.record(z.string(), z.string()),
+    images: z.array(z.string()).optional(),
   });
   
   const createProductSchema = z.object({
     name: z.string().min(1),
-    description: z.string().min(1),
-    is_featured: z.boolean(),
-    is_archived: z.boolean(),
+    description: z.string().optional(),
+    is_featured: z.boolean().default(false),
+    is_archived: z.boolean().default(false),
     category_id: z.string(),
-    variants: z.array(z.string()),
-    items: z.array(itemSchema),
+    variants: z.array(z.string()).optional(),
+    items: z.array(itemSchema).min(1),
   });
-
-
-
 
   type createCategoryType = z.infer<typeof createCategorySchema>
   type createProductType = z.infer<typeof createProductSchema>

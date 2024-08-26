@@ -27,24 +27,19 @@ SELECT
                     LEFT JOIN product_variant_options pvo ON vo.id = pvo.variant_option_id
                     LEFT JOIN variants v ON vo.variant_id = v.id
                     WHERE pvo.product_variant_id = pv.id
-                )
+                ),
+                'images', COALESCE(
+                    (
+                      SELECT json_agg(i.image_id)
+                      FROM product_variant_images pvi
+                      JOIN images i ON i.id = pvi.image_id
+                      WHERE pvi.product_variant_id = pv.id
+                    ),
+                    '[]'::json
+                  )
             )
         ) FILTER (WHERE pv.id IS NOT NULL), '[]'
     ) AS product_variants,
-    COALESCE(
-        JSON_AGG(
-            jsonb_build_object('product_variant_id', pv.id) || 
-            COALESCE(
-                (SELECT jsonb_object_agg(v.id, vo.id)
-                 FROM variant_options vo
-                 LEFT JOIN product_variant_options pvo ON vo.id = pvo.variant_option_id
-                 LEFT JOIN variants v ON vo.variant_id = v.id
-                 WHERE pvo.product_variant_id = pv.id),
-                '{}'::jsonb
-            )
-        ) FILTER (WHERE pv.id IS NOT NULL),
-        '[]'
-    ) AS available_combinations,
     COALESCE(
         (SELECT 
             JSON_AGG(

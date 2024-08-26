@@ -64,7 +64,7 @@ type CreateVariantOptionParams struct {
 	Value        string           `json:"value"`
 	DisplayOrder int32            `json:"display_order"`
 	Data         pgtype.Text      `json:"data"`
-	ImageID      pgtype.Text      `json:"image_id"`
+	ImageID      pgtype.Int4      `json:"image_id"`
 }
 
 func (q *Queries) CreateVariantOption(ctx context.Context, arg CreateVariantOptionParams) (VariantOption, error) {
@@ -525,7 +525,7 @@ type UpdateVariantOptionParams struct {
 	Value        string           `json:"value"`
 	DisplayOrder int32            `json:"display_order"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	ImageID      pgtype.Text      `json:"image_id"`
+	ImageID      pgtype.Int4      `json:"image_id"`
 	Data         pgtype.Text      `json:"data"`
 }
 

@@ -97,6 +97,7 @@ type Category struct {
 	ParentID         pgtype.Text      `json:"parent_id"`
 	Level            int32            `json:"level"`
 	UniqueIdentifier string           `json:"unique_identifier"`
+	ImageID          pgtype.Int4      `json:"image_id"`
 }
 
 type CategoryVariant struct {
@@ -113,15 +114,11 @@ type Country struct {
 }
 
 type Image struct {
-	ID               string           `json:"id"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
-	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
-	Title            string           `json:"title"`
-	ProductVariantID pgtype.Text      `json:"product_variant_id"`
-	DisplayOrder     int32            `json:"display_order"`
-	ImageUrl         string           `json:"image_url"`
-	StoreID          pgtype.Text      `json:"store_id"`
-	UserID           pgtype.Text      `json:"user_id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Title     pgtype.Text      `json:"title"`
+	ImageID   string           `json:"image_id"`
+	ID        pgtype.Int4      `json:"id"`
 }
 
 type Order struct {
@@ -175,10 +172,10 @@ type ProductVariant struct {
 }
 
 type ProductVariantImage struct {
-	ID               string `json:"id"`
-	ImageID          string `json:"image_id"`
-	ProductVariantID string `json:"product_variant_id"`
-	StoreID          string `json:"store_id"`
+	ProductVariantID string      `json:"product_variant_id"`
+	ID               int32       `json:"id"`
+	ImageID          pgtype.Int4 `json:"image_id"`
+	DisplayOrder     int32       `json:"display_order"`
 }
 
 type ProductVariantOption struct {
@@ -194,6 +191,7 @@ type Store struct {
 	Description pgtype.Text      `json:"description"`
 	UserID      string           `json:"user_id"`
 	Logo        pgtype.Text      `json:"logo"`
+	ImageID     pgtype.Int4      `json:"image_id"`
 }
 
 type User struct {
@@ -205,6 +203,7 @@ type User struct {
 	Password  string           `json:"password"`
 	Role      UserRole         `json:"role"`
 	StoreID   pgtype.Text      `json:"store_id"`
+	ImageID   pgtype.Int4      `json:"image_id"`
 }
 
 type Variant struct {
@@ -225,7 +224,7 @@ type VariantOption struct {
 	Value        string           `json:"value"`
 	DisplayOrder int32            `json:"display_order"`
 	Data         pgtype.Text      `json:"data"`
-	ImageID      pgtype.Text      `json:"image_id"`
+	ImageID      pgtype.Int4      `json:"image_id"`
 }
 
 type Wishlist struct {

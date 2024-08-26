@@ -12,9 +12,9 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, username, email, password, role, store_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, created_at, updated_at, username, email, password, role, store_id
+INSERT INTO users (id, created_at, updated_at, username, email, password, role, store_id, image_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, created_at, updated_at, username, email, password, role, store_id, image_id
 `
 
 type CreateUserParams struct {
@@ -26,6 +26,7 @@ type CreateUserParams struct {
 	Password  string           `json:"password"`
 	Role      UserRole         `json:"role"`
 	StoreID   pgtype.Text      `json:"store_id"`
+	ImageID   pgtype.Int4      `json:"image_id"`
 }
 
 // Users
@@ -39,6 +40,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Password,
 		arg.Role,
 		arg.StoreID,
+		arg.ImageID,
 	)
 	var i User
 	err := row.Scan(
@@ -50,6 +52,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Password,
 		&i.Role,
 		&i.StoreID,
+		&i.ImageID,
 	)
 	return i, err
 }
@@ -65,7 +68,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, username, email, password, role, store_id FROM users
+SELECT id, created_at, updated_at, username, email, password, role, store_id, image_id FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -81,12 +84,13 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 		&i.Password,
 		&i.Role,
 		&i.StoreID,
+		&i.ImageID,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, created_at, updated_at, username, email, password, role, store_id FROM users
+SELECT id, created_at, updated_at, username, email, password, role, store_id, image_id FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -102,12 +106,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Password,
 		&i.Role,
 		&i.StoreID,
+		&i.ImageID,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, created_at, updated_at, username, email, password, role, store_id FROM users
+SELECT id, created_at, updated_at, username, email, password, role, store_id, image_id FROM users
 WHERE username = $1 LIMIT 1
 `
 
@@ -123,12 +128,13 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Password,
 		&i.Role,
 		&i.StoreID,
+		&i.ImageID,
 	)
 	return i, err
 }
 
 const listUsersForStore = `-- name: ListUsersForStore :many
-SELECT id, created_at, updated_at, username, email, password, role, store_id FROM users
+SELECT id, created_at, updated_at, username, email, password, role, store_id, image_id FROM users
 WHERE store_id = $1
 ORDER BY created_at
 LIMIT $2 OFFSET $3
@@ -158,6 +164,7 @@ func (q *Queries) ListUsersForStore(ctx context.Context, arg ListUsersForStorePa
 			&i.Password,
 			&i.Role,
 			&i.StoreID,
+			&i.ImageID,
 		); err != nil {
 			return nil, err
 		}
@@ -171,9 +178,9 @@ func (q *Queries) ListUsersForStore(ctx context.Context, arg ListUsersForStorePa
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET username = $2, email = $3, password = $4, updated_at = $5
+SET username = $2, email = $3, password = $4, updated_at = $5, image_id = $6
 WHERE id = $1
-RETURNING id, created_at, updated_at, username, email, password, role, store_id
+RETURNING id, created_at, updated_at, username, email, password, role, store_id, image_id
 `
 
 type UpdateUserParams struct {
@@ -182,6 +189,7 @@ type UpdateUserParams struct {
 	Email     string           `json:"email"`
 	Password  string           `json:"password"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	ImageID   pgtype.Int4      `json:"image_id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -191,6 +199,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.Email,
 		arg.Password,
 		arg.UpdatedAt,
+		arg.ImageID,
 	)
 	var i User
 	err := row.Scan(
@@ -202,6 +211,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Password,
 		&i.Role,
 		&i.StoreID,
+		&i.ImageID,
 	)
 	return i, err
 }

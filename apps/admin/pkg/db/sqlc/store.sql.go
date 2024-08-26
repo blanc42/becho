@@ -14,7 +14,7 @@ import (
 const createStore = `-- name: CreateStore :one
 INSERT INTO stores (id, created_at, updated_at, name, description, user_id)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, created_at, updated_at, name, description, user_id, logo
+RETURNING id, created_at, updated_at, name, description, user_id, logo, image_id
 `
 
 type CreateStoreParams struct {
@@ -45,6 +45,7 @@ func (q *Queries) CreateStore(ctx context.Context, arg CreateStoreParams) (Store
 		&i.Description,
 		&i.UserID,
 		&i.Logo,
+		&i.ImageID,
 	)
 	return i, err
 }
@@ -60,7 +61,7 @@ func (q *Queries) DeleteStore(ctx context.Context, id string) error {
 }
 
 const getStore = `-- name: GetStore :one
-SELECT id, created_at, updated_at, name, description, user_id, logo FROM stores
+SELECT id, created_at, updated_at, name, description, user_id, logo, image_id FROM stores
 WHERE id = $1 LIMIT 1
 `
 
@@ -75,12 +76,13 @@ func (q *Queries) GetStore(ctx context.Context, id string) (Store, error) {
 		&i.Description,
 		&i.UserID,
 		&i.Logo,
+		&i.ImageID,
 	)
 	return i, err
 }
 
 const listStores = `-- name: ListStores :many
-SELECT id, created_at, updated_at, name, description, user_id, logo FROM stores
+SELECT id, created_at, updated_at, name, description, user_id, logo, image_id FROM stores
 WHERE user_id = $1
 ORDER BY created_at
 `
@@ -102,6 +104,7 @@ func (q *Queries) ListStores(ctx context.Context, userID string) ([]Store, error
 			&i.Description,
 			&i.UserID,
 			&i.Logo,
+			&i.ImageID,
 		); err != nil {
 			return nil, err
 		}
@@ -117,7 +120,7 @@ const updateStore = `-- name: UpdateStore :one
 UPDATE stores
 SET name = $2, description = $3, updated_at = $4
 WHERE id = $1
-RETURNING id, created_at, updated_at, name, description, user_id, logo
+RETURNING id, created_at, updated_at, name, description, user_id, logo, image_id
 `
 
 type UpdateStoreParams struct {
@@ -143,6 +146,7 @@ func (q *Queries) UpdateStore(ctx context.Context, arg UpdateStoreParams) (Store
 		&i.Description,
 		&i.UserID,
 		&i.Logo,
+		&i.ImageID,
 	)
 	return i, err
 }

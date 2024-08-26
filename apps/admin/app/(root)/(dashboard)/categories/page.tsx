@@ -7,16 +7,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusSquareIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Category } from "@/lib/types";
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  level: number;
-  parent_id: string | null;
-  unique_identifier: string;
-  variants: string[];
-}
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -63,22 +55,26 @@ export default function CategoriesPage() {
         </Button>
       </div>
       {isLoading ? (
-        <ul className="pl-4">
+        <div>
+          <div className="flex bg-gray-100 dark:bg-gray-800 font-semibold h-12">
+            <div className="flex-1 flex items-center px-4">Category Name</div>
+            <div className="w-24 flex items-center justify-center">Image</div>
+            <div className="w-24 flex items-center justify-center">Actions</div>
+          </div>
           {[...Array(5)].map((_, index) => (
-            <li key={index} className="mb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Skeleton className="h-6 w-6 mr-2" />
-                  <Skeleton className="h-4 w-40" />
-                </div>
-                <div className="flex items-center">
-                  <Skeleton className="h-6 w-6 mr-2" />
-                  <Skeleton className="h-6 w-6" />
-                </div>
+            <div key={index} className="flex items-center h-16 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Skeleton className="h-8 w-8 mr-2 ml-4" />
+              <Skeleton className="h-4 w-40 flex-1" />
+              <div className="w-24 flex justify-center">
+                <Skeleton className="h-10 w-10 rounded" />
               </div>
-            </li>
+              <div className="w-24 flex justify-end">
+                <Skeleton className="h-8 w-8 mr-2" />
+                <Skeleton className="h-8 w-8 mr-4" />
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
         <CategoryTree categories={categories} />
       )}

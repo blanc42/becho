@@ -29,8 +29,14 @@ export interface Category {
     level: number;
     parent_id: string | null;
     unique_identifier: string;
-    variants: string[];
+    variants: VariantInsideCategory[];
     subCategories?: Category[];
+    image?: string;
+}
+
+type VariantInsideCategory = {
+    id: string;
+    name: string;
 }
 
 const VariantOptionSchema = z.record(z.string(), z.string());
@@ -46,7 +52,7 @@ const ItemSchema = z.object({
 
 const ProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string(),
+  description: z.string().optional(),
   // category_id: z.string().min(1, "Category is required"),
   has_variants: z.boolean(),
   is_archived: z.boolean(),

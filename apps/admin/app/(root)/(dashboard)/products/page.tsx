@@ -6,6 +6,7 @@ import ProductTable from './ProductTable';
 import { Button } from "@/components/ui/button";
 import { Plus, PlusSquareIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Product {
   id: string;
@@ -22,6 +23,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { selectedStore } = useStoreData();
+  const router = useRouter()
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -46,13 +48,12 @@ export default function ProductsPage() {
   }, [selectedStore]);
 
   const handlePreview = (product: Product) => {
-    console.log('Preview product:', product);
-    // Implement preview logic
+      router.push(`/products/${product.id}`)
   };
 
   const handleEdit = (product: Product) => {
     console.log('Edit product:', product);
-    // Implement edit logic
+    router.push(`/products/${product.id}/edit`)
   };
 
   const handleDelete = (product: Product) => {
@@ -61,8 +62,8 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-4 w-full max-w-screen-xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
+    <div className="w-full max-w-screen-xl mx-auto">
+      <div className="flex justify-between items-center my-12">
         <h1 className="text-2xl font-bold">Products</h1>
         <Button asChild>
           <Link href="/products/add">

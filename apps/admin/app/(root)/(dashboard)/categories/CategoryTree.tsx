@@ -1,20 +1,13 @@
 "use client"
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusSquareIcon, MinusSquareIcon, ChevronRightIcon, ChevronDownIcon, Edit, Trash2 } from "lucide-react";
+import { ChevronRightIcon, ChevronDownIcon, Edit, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import Image from "next/image";
+import { Category } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  level: number;
-  parent_id: string | null;
-  unique_identifier: string;
-  variants: string[];
-}
-
-export default function CategoryTree({ categories, parentId = null }: { categories: Category[], parentId?: string | null }) {
+export default function CategoryTree({ categories }: { categories: Category[] }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (id: string) => {
@@ -36,39 +29,69 @@ export default function CategoryTree({ categories, parentId = null }: { categori
     });
   };
 
-  const filteredCategories = categories.filter(cat => cat.parent_id === parentId);
+  const renderCategoryRow = (category: Category, depth: number) => {
+    const hasChildren = categories.some(cat => cat.parent_id === category.id);
+    const isExpanded = expanded[category.id];
+
+    return (
+      <div key={category.id}>
+        <div 
+          className="flex items-center h-16 hover:bg-muted/50 transition-colors"
+          style={{ paddingLeft: `${depth * 20}px` }}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2"
+            onClick={() => toggleExpand(category.id)}
+            disabled={!hasChildren}
+          >
+            {hasChildren && (isExpanded ? <ChevronDownIcon size={16} /> : <ChevronRightIcon size={16} />)}
+          </Button>
+          <div className="flex-1">{category.name}</div>
+          <div className="flex-1 flex flex-wrap gap-1">
+            {category.variants.map(variant => (
+              <Badge key={variant.id} variant="secondary">{variant.name}</Badge>
+            ))}
+          </div>
+          <div className="w-24 flex justify-center">
+            {category.image ? (
+              <Image src={category.image} alt={category.name} width={40} height={40} className="rounded" />
+            ) : (
+              <div className="w-10 h-10 bg-muted rounded"></div>
+            )}
+          </div>
+          <div className="w-24 flex justify-end">
+            <Button variant="ghost" size="icon" onClick={() => handleEdit(category.id)}>
+              <Edit size={16} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        </div>
+        {isExpanded && renderChildCategories(category.id, depth + 1)}
+      </div>
+    );
+  };
+
+  const renderChildCategories = (parentId: string | null, depth: number) => {
+    return categories
+      .filter(category => category.parent_id === parentId)
+      .map(category => renderCategoryRow(category, depth));
+  };
 
   return (
-    <ul className="pl-4">
-      {filteredCategories.map(category => (
-        <li key={category.id} className="mb-2 hover:dark:bg-gray-800 hover:bg-gray-200">
-          <div className="flex items-center justify-between group">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="mr-1"
-                disabled={!categories.some(cat => cat.parent_id === category.id)}
-                onClick={() => toggleExpand(category.id)}
-              >
-                {expanded[category.id] ? <MinusSquareIcon size={16} /> : <PlusSquareIcon size={16} />}
-              </Button>
-              <span>{category.name}</span>
-            </div>
-            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button variant="ghost" size="icon" onClick={() => handleEdit(category.id)}>
-                <Edit size={16} />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          </div>
-          {expanded[category.id] && (
-            <CategoryTree categories={categories} parentId={category.id} />
-          )}
-        </li>
-      ))}
-    </ul>
+    <div>
+      <div className="flex text-muted-foreground border-b hover:bg-muted/50 font-medium h-12">
+        <div className="flex-1 flex items-center px-4">Category Name</div>
+        <div className="flex-1 flex items-center px-4">Variants</div>
+        <div className="w-24 flex items-center justify-center">Image</div>
+        <div className="w-24 flex items-center justify-center">Actions</div>
+      </div>
+      <div>
+        {renderChildCategories(null, 0)}
+      </div>
+    </div>
   );
-};
+}

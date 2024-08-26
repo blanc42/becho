@@ -14,6 +14,7 @@ type ProductRepository interface {
 	GetProducts(ctx context.Context, arg db.GetFilteredProductsParams) ([]db.GetFilteredProductsRow, error)
 	CreateProductItem(ctx context.Context, arg db.CreateProductItemParams) (db.ProductVariant, error)
 	CreateProductVariantOption(ctx context.Context, arg db.CreateProductVariantOptionParams) (db.ProductVariantOption, error)
+	CreateProductVariantImage(ctx context.Context, arg db.CreateProductVariantImageParams) (db.ProductVariantImage, error)
 }
 
 type productRepository struct {
@@ -46,4 +47,8 @@ func (r *productRepository) CreateProductItem(ctx context.Context, arg db.Create
 
 func (r *productRepository) CreateProductVariantOption(ctx context.Context, arg db.CreateProductVariantOptionParams) (db.ProductVariantOption, error) {
 	return r.db.CreateProductVariantOption(ctx, arg)
+}
+
+func (r *productRepository) CreateProductVariantImage(ctx context.Context, arg db.CreateProductVariantImageParams) (db.ProductVariantImage, error) {
+	return r.db.CreateProductVariantImage(ctx, arg)
 }

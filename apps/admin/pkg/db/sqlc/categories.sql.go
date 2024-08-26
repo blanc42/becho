@@ -15,7 +15,7 @@ const createCategory = `-- name: CreateCategory :one
 INSERT INTO 
     categories (id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier
+RETURNING id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier, image_id
 `
 
 type CreateCategoryParams struct {
@@ -54,6 +54,7 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.ParentID,
 		&i.Level,
 		&i.UniqueIdentifier,
+		&i.ImageID,
 	)
 	return i, err
 }
@@ -97,12 +98,21 @@ SELECT
     c.parent_id,
     c.level,
     c.unique_identifier,
-    ARRAY_AGG(cv.variant_id) AS variants
+    i.image_id AS image,
+    ARRAY_AGG(
+        CASE 
+            WHEN v.id IS NOT NULL THEN 
+                jsonb_build_object('id', v.id, 'name', v.label)
+            ELSE NULL
+        END
+    ) FILTER (WHERE v.id IS NOT NULL) AS variants
 FROM categories c
+LEFT JOIN images i ON c.image_id = i.id
 LEFT JOIN category_variants cv ON c.id = cv.category_id
-WHERE store_id = $1
-GROUP BY c.id
-ORDER BY created_at
+LEFT JOIN variants v ON cv.variant_id = v.id
+WHERE c.store_id = $1
+GROUP BY c.id, i.image_id
+ORDER BY c.created_at
 `
 
 type GetAllCategoriesRow struct {
@@ -112,6 +122,7 @@ type GetAllCategoriesRow struct {
 	ParentID         pgtype.Text `json:"parent_id"`
 	Level            int32       `json:"level"`
 	UniqueIdentifier string      `json:"unique_identifier"`
+	Image            pgtype.Text `json:"image"`
 	Variants         interface{} `json:"variants"`
 }
 
@@ -131,6 +142,7 @@ func (q *Queries) GetAllCategories(ctx context.Context, storeID string) ([]GetAl
 			&i.ParentID,
 			&i.Level,
 			&i.UniqueIdentifier,
+			&i.Image,
 			&i.Variants,
 		); err != nil {
 			return nil, err
@@ -225,7 +237,7 @@ func (q *Queries) GetAllCategoriesRecursive(ctx context.Context, storeID string)
 }
 
 const getCategory = `-- name: GetCategory :one
-SELECT c.id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier, cv.id, category_id, variant_id, ARRAY_AGG(cv.variant_id) AS variants
+SELECT c.id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier, image_id, cv.id, category_id, variant_id, ARRAY_AGG(cv.variant_id) AS variants
 FROM categories c
 LEFT JOIN category_variants cv ON c.id = cv.category_id
 WHERE c.id = $1 AND c.store_id = $2 
@@ -248,6 +260,7 @@ type GetCategoryRow struct {
 	ParentID         pgtype.Text      `json:"parent_id"`
 	Level            int32            `json:"level"`
 	UniqueIdentifier string           `json:"unique_identifier"`
+	ImageID          pgtype.Int4      `json:"image_id"`
 	ID_2             pgtype.Text      `json:"id_2"`
 	CategoryID       pgtype.Text      `json:"category_id"`
 	VariantID        pgtype.Text      `json:"variant_id"`
@@ -267,6 +280,7 @@ func (q *Queries) GetCategory(ctx context.Context, arg GetCategoryParams) (GetCa
 		&i.ParentID,
 		&i.Level,
 		&i.UniqueIdentifier,
+		&i.ImageID,
 		&i.ID_2,
 		&i.CategoryID,
 		&i.VariantID,
@@ -276,7 +290,7 @@ func (q *Queries) GetCategory(ctx context.Context, arg GetCategoryParams) (GetCa
 }
 
 const listCategories = `-- name: ListCategories :many
-SELECT id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier FROM categories
+SELECT id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier, image_id FROM categories
 WHERE store_id = $1
 ORDER BY created_at
 `
@@ -300,6 +314,7 @@ func (q *Queries) ListCategories(ctx context.Context, storeID string) ([]Categor
 			&i.ParentID,
 			&i.Level,
 			&i.UniqueIdentifier,
+			&i.ImageID,
 		); err != nil {
 			return nil, err
 		}
@@ -315,7 +330,7 @@ const updateCategory = `-- name: UpdateCategory :one
 UPDATE categories
 SET name = $2, description = $3, parent_id = $4, updated_at = $5
 WHERE id = $1 AND store_id = $6
-RETURNING id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier
+RETURNING id, created_at, updated_at, name, description, store_id, parent_id, level, unique_identifier, image_id
 `
 
 type UpdateCategoryParams struct {
@@ -347,6 +362,7 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		&i.ParentID,
 		&i.Level,
 		&i.UniqueIdentifier,
+		&i.ImageID,
 	)
 	return i, err
 }

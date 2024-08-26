@@ -58,6 +58,30 @@ func (q *Queries) CreateProductItem(ctx context.Context, arg CreateProductItemPa
 	return i, err
 }
 
+const createProductVariantImage = `-- name: CreateProductVariantImage :one
+INSERT INTO product_variant_images (product_variant_id, image_id, display_order)
+VALUES ($1, $2, $3)
+RETURNING product_variant_id, id, image_id, display_order
+`
+
+type CreateProductVariantImageParams struct {
+	ProductVariantID string      `json:"product_variant_id"`
+	ImageID          pgtype.Int4 `json:"image_id"`
+	DisplayOrder     int32       `json:"display_order"`
+}
+
+func (q *Queries) CreateProductVariantImage(ctx context.Context, arg CreateProductVariantImageParams) (ProductVariantImage, error) {
+	row := q.db.QueryRow(ctx, createProductVariantImage, arg.ProductVariantID, arg.ImageID, arg.DisplayOrder)
+	var i ProductVariantImage
+	err := row.Scan(
+		&i.ProductVariantID,
+		&i.ID,
+		&i.ImageID,
+		&i.DisplayOrder,
+	)
+	return i, err
+}
+
 const deleteProductItem = `-- name: DeleteProductItem :exec
 DELETE FROM product_variants
 WHERE id = $1

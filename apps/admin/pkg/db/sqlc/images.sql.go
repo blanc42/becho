@@ -12,80 +12,74 @@ import (
 )
 
 const createImage = `-- name: CreateImage :one
-INSERT INTO images (id, created_at, updated_at, title, product_variant_id, display_order, image_url)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, title, product_variant_id, display_order, image_url, store_id, user_id
+INSERT INTO images (created_at, updated_at, title, image_id)
+VALUES ($1, $2, $3, $4)
+RETURNING created_at, updated_at, title, image_id, id
 `
 
 type CreateImageParams struct {
-	ID               string           `json:"id"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
-	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
-	Title            string           `json:"title"`
-	ProductVariantID pgtype.Text      `json:"product_variant_id"`
-	DisplayOrder     int32            `json:"display_order"`
-	ImageUrl         string           `json:"image_url"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Title     pgtype.Text      `json:"title"`
+	ImageID   string           `json:"image_id"`
 }
 
 func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image, error) {
 	row := q.db.QueryRow(ctx, createImage,
-		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.Title,
-		arg.ProductVariantID,
-		arg.DisplayOrder,
-		arg.ImageUrl,
+		arg.ImageID,
 	)
 	var i Image
 	err := row.Scan(
-		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
-		&i.ProductVariantID,
-		&i.DisplayOrder,
-		&i.ImageUrl,
-		&i.StoreID,
-		&i.UserID,
+		&i.ImageID,
+		&i.ID,
 	)
 	return i, err
 }
 
+const deleteImage = `-- name: DeleteImage :exec
+DELETE FROM images
+WHERE id = $1
+`
+
+func (q *Queries) DeleteImage(ctx context.Context, id pgtype.Int4) error {
+	_, err := q.db.Exec(ctx, deleteImage, id)
+	return err
+}
+
 const updateImage = `-- name: UpdateImage :one
 UPDATE images
-SET title = $2, image_url = $3, display_order = $4, updated_at = $5
+SET title = $2, image_id = $3, updated_at = $4
 WHERE id = $1
-RETURNING id, created_at, updated_at, title, product_variant_id, display_order, image_url, store_id, user_id
+RETURNING created_at, updated_at, title, image_id, id
 `
 
 type UpdateImageParams struct {
-	ID           string           `json:"id"`
-	Title        string           `json:"title"`
-	ImageUrl     string           `json:"image_url"`
-	DisplayOrder int32            `json:"display_order"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+	ID        pgtype.Int4      `json:"id"`
+	Title     pgtype.Text      `json:"title"`
+	ImageID   string           `json:"image_id"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) (Image, error) {
 	row := q.db.QueryRow(ctx, updateImage,
 		arg.ID,
 		arg.Title,
-		arg.ImageUrl,
-		arg.DisplayOrder,
+		arg.ImageID,
 		arg.UpdatedAt,
 	)
 	var i Image
 	err := row.Scan(
-		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
-		&i.ProductVariantID,
-		&i.DisplayOrder,
-		&i.ImageUrl,
-		&i.StoreID,
-		&i.UserID,
+		&i.ImageID,
+		&i.ID,
 	)
 	return i, err
 }

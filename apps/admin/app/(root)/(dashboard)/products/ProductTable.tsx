@@ -4,12 +4,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from 'next/navigation';
 
 interface ProductVariant {
   id: string;
   sku: string;
   price: number;
   quantity: number;
+  images : string[];
 }
 
 interface Product {
@@ -41,6 +43,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
             <TableHead>Category</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Quantity</TableHead>
+            <TableHead>Images</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -51,7 +54,8 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
               <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
               <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
               <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
-              <TableCell><Skeleton className="h-8 w-[120px] ml-auto" /></TableCell>
+              <TableCell><Skeleton className="h-8 w-[80px] ml-auto" /></TableCell>
+              <TableCell><Skeleton className="h-8 w-[60px] ml-auto" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -67,6 +71,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
           <TableHead>Category</TableHead>
           <TableHead>Price</TableHead>
           <TableHead>Quantity</TableHead>
+          <TableHead>Images</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -85,9 +90,14 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onPrev
                 ? product.product_variants[0].quantity
                 : 'N/A'}
             </TableCell>
+            <TableCell className='flex items-baseline space-x-2'>
+            {product.product_variants[0].images.slice(0, 3).map((image, index) => (
+              <img key={image} src={`https://ucarecdn.com/${image}/-/scale_crop/50x50/center/`} alt={`Product Image ${index}`} width={50} height={50} />
+            ))}
+            </TableCell>
             <TableCell>
               <div className="flex space-x-2 justify-end">
-                <Button variant="ghost" size="sm" onClick={() => onPreview(product)}>
+                <Button  variant="ghost" size="sm" onClick={() => onPreview(product)}>
                   <Eye className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onEdit(product)}>

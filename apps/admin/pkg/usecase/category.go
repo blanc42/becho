@@ -165,12 +165,16 @@ func (c *categoryUseCase) GetAllCategoriesRecursive(ctx context.Context, storeID
 	var rootCategories []*response.CategoryTreeNode
 
 	for _, cat := range categories {
-		variants := make([]string, 0)
+		variants := make([]response.VariantInsideCategoryResponse, 0)
 		if cat.Variants != nil {
 			if variantSlice, ok := cat.Variants.([]interface{}); ok {
 				for _, v := range variantSlice {
-					if strValue, ok := v.(string); ok {
-						variants = append(variants, strValue)
+					if variantMap, ok := v.(map[string]interface{}); ok {
+						variant := response.VariantInsideCategoryResponse{
+							ID:   variantMap["id"].(string),
+							Name: variantMap["name"].(string),
+						}
+						variants = append(variants, variant)
 					}
 				}
 			}

@@ -67,12 +67,21 @@ SELECT
     c.parent_id,
     c.level,
     c.unique_identifier,
-    ARRAY_AGG(cv.variant_id) AS variants
+    i.image_id AS image,
+    ARRAY_AGG(
+        CASE 
+            WHEN v.id IS NOT NULL THEN 
+                jsonb_build_object('id', v.id, 'name', v.label)
+            ELSE NULL
+        END
+    ) FILTER (WHERE v.id IS NOT NULL) AS variants
 FROM categories c
+LEFT JOIN images i ON c.image_id = i.id
 LEFT JOIN category_variants cv ON c.id = cv.category_id
-WHERE store_id = $1
-GROUP BY c.id
-ORDER BY created_at;
+LEFT JOIN variants v ON cv.variant_id = v.id
+WHERE c.store_id = $1
+GROUP BY c.id, i.image_id
+ORDER BY c.created_at;
 
 
 

@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingPage from '@/components/pages/LoadingPage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import UploadImage from '@/components/UploadImage';
 
 export default function AddProductPage() {
   const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
@@ -44,21 +44,22 @@ export default function AddProductPage() {
   const form = useForm<createProductType>({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: 'test name product',
+      description: 'test description product',
       is_featured: false,
       is_archived: false,
       category_id: '',
       variants: [],
       items: [{
         sku: '',
-        quantity: 0,
-        price: 0,
-        cost_price: 0,
+        quantity: 12,
+        price: 12,
+        cost_price: 12,
         discounted_price: 0,
         variant_options: {},
+        images: [],
       }],
-    },
+    }
   });
 
   const { fields, replace, remove } = useFieldArray({
@@ -99,6 +100,7 @@ export default function AddProductPage() {
   }, [selectedStore]);
 
   const onSubmit = async (data: createProductType) => {
+    console.log("clicked on submit");
     console.log(data);
     // Handle form submission
     setIsSubmitting(true);
@@ -134,10 +136,10 @@ export default function AddProductPage() {
   const handleCategoryChange = (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
     if (category) {
-      const newCategoryVariants = variants.filter(v => category.variants.includes(v.id));
+      const newCategoryVariants = variants.filter(v => category.variants.some(cv => cv.id === v.id));
       setCategoryVariants(newCategoryVariants);
       setSelectedVariants(prevVariants => {
-        const nonCategoryVariants = prevVariants.filter(v => !category.variants.includes(v.id));
+        const nonCategoryVariants = prevVariants.filter(v => !category.variants.some(cv => cv.id === v.id));
         const updatedCategoryVariants = newCategoryVariants.map(variant => ({
           ...variant,
           options: [variant.options[0]] // Select only the first option
@@ -342,15 +344,45 @@ export default function AddProductPage() {
     setRemovedCombinations([]);
   }, [selectedVariants, replace, form, generateCombinations]);
 
+  const [setAllPrices, setSetAllPrices] = useState(false);
+
+  // Add console log statement for form errors
+  // Todo: remove later
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      if (Object.keys(form.formState.errors).length > 0) {
+        console.log('Form has errors:', form.formState.errors);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   if (isLoading) {
-    return <div className='w-full'>
-      <LoadingPage />
-    </div>
+    return (
+      <div className="w-full max-w-screen-xl mx-auto">
+        <div className="flex justify-between items-center my-12">
+          <h1 className="text-2xl font-bold">Add Product</h1>
+          <Button disabled>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        </div>
+        <div className="space-y-8">
+          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+          <div className="flex space-x-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-1/2"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-1/2"></div>
+          </div>
+          <div className="h-40 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 w-full max-w-screen-xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
+    <div className="w-full max-w-screen-xl mx-auto">
+      <div className="flex justify-between items-center my-12">
         <h1 className="text-2xl font-bold">Add Product</h1>
         <Button asChild>
           <Link href="/products">
@@ -441,30 +473,43 @@ export default function AddProductPage() {
             </TooltipProvider>
           </div>
 
-          <FormField
-            control={form.control}
-            name="category_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <CategorySingleSelector
-                    categories={categories}
-                    value={field.value}
-                    onChange={handleCategoryChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <CategorySingleSelector
+                      categories={categories}
+                      value={field.value}
+                      onChange={handleCategoryChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="variants"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <VariantMultiSelector
+                      variants={variants}
+                      selectedVariants={selectedVariants}
+                      onVariantSelect={handleVariantSelect}
+                      categoryVariants={categoryVariants}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div>
-            <VariantMultiSelector
-              variants={variants}
-              selectedVariants={selectedVariants}
-              onVariantSelect={handleVariantSelect}
-              categoryVariants={categoryVariants}
-            />
             {selectedVariants.map((variant) => (
               <div key={variant.id} className="flex flex-col mt-4 p-4 border rounded">
                 <div className="flex flex-wrap gap-2">
@@ -499,21 +544,103 @@ export default function AddProductPage() {
             ))}
           </div>
 
+          {selectedVariants.length > 0 && (
+            <div className="flex items-center space-x-2 mb-4">
+              <Checkbox
+                checked={setAllPrices}
+                onCheckedChange={(e) => setSetAllPrices(e === true)}
+              />
+              <span>Set all prices</span>
+            </div>
+          )}
+
+          {setAllPrices && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="items.0.cost_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost Price</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => {
+                          field.onChange(e.target.value === '' ? '' : +e.target.value);
+                          handleSetAllPrices('cost_price');
+                        }}
+                        onFocus={e => e.target.select()}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="items.0.price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => {
+                          field.onChange(e.target.value === '' ? '' : +e.target.value);
+                          handleSetAllPrices('price');
+                        }}
+                        onFocus={e => e.target.select()}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="items.0.discounted_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Discounted Price</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => {
+                          field.onChange(e.target.value === '' ? '' : +e.target.value);
+                          handleSetAllPrices('discounted_price');
+                        }}
+                        onFocus={e => e.target.select()}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
           {selectedVariants.length > 0 ? (
             <div>
-              <FormLabel>Product Variants</FormLabel>
-              <div className="space-y-4 overflow-x-auto">
-                <div className="grid grid-cols-7 gap-4 font-bold min-w-[800px]">
+              <FormLabel className="text-2xl font-semibold">Product Variants</FormLabel>
+              <div className="space-y-4 overflow-x-auto mt-6">
+                <div className={`grid gap-4 font-bold ${setAllPrices ? 'grid-cols-5' : 'grid-cols-8'}`}>
                   <div>Variants</div>
                   <div>SKU</div>
                   <div>Quantity</div>
-                  <div>Cost Price</div>
-                  <div>Price</div>
-                  <div>Discounted Price</div>
+                  {
+                    !setAllPrices && (
+                      <>
+                      <div>Cost Price</div>
+                      <div>Price</div>
+                      <div>Discounted Price</div>
+                      </>
+                    )
+                  }
+                  <div>Images</div>
                   <div className="text-right">Actions</div>
                 </div>
                 {fields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-7 gap-4 items-center min-w-[800px]">
+                  <div key={field.id} className={`grid gap-4 items-center ${setAllPrices ? 'grid-cols-5' : 'grid-cols-8'}`}>
                     <div>
                       {Object.entries(field.variant_options).map(([variantId, optionId]) => {
                         const variant = selectedVariants.find(v => v.id === variantId);
@@ -548,7 +675,11 @@ export default function AddProductPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField
+
+                    {
+                      !setAllPrices && (
+                          <>
+                          <FormField
                       control={form.control}
                       name={`items.${index}.cost_price`}
                       render={({ field }) => (
@@ -594,6 +725,37 @@ export default function AddProductPage() {
                             />
                           </FormControl>
                         </FormItem>
+                          )}
+                        />
+                      </>
+                    )
+                    }
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.images`}
+                      render={({ field }) => (
+                        <div className="flex gap-2">
+                              <FormItem>
+                                <FormControl>
+                                  <UploadImage
+                                    images={field.value || []}
+                                    maxImages={5}
+                                    setImages={field.onChange}
+                                    variant='small'
+                                  />
+                                </FormControl>
+                              </FormItem>
+                          <div className="flex flex-row gap-1">
+                            {field.value?.slice(0, 3).map((imageId, index) => (
+                              <img
+                                key={index}
+                                src={`https://ucarecdn.com/${imageId}/-/scale_crop/50x50/`}
+                                alt={`Uploaded image ${index + 1}`}
+                                className="w-9 h-9 object-cover rounded"
+                              />
+                            ))}
+                          </div>
+                        </div>
                       )}
                     />
                     <div className="text-right">

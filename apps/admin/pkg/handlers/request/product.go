@@ -19,6 +19,7 @@ type CreateProductVariantRequest struct {
 	CostPrice       int64             `json:"cost_price" binding:"required"`
 	DiscountedPrice int64             `json:"discounted_price" binding:"required"`
 	VariantOptions  map[string]string `json:"variant_options"`
+	Images          []string          `json:"images"`
 }
 
 type UpdateProductRequest struct {

@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// gin router
 func SetupRouter(e *gin.Engine, u handlers.UserHandler, p handlers.ProductHandler, s handlers.StoreHandler, c handlers.CategoryHandler, v handlers.VariantHandler) {
 	// CORS middleware
 	config := cors.DefaultConfig()

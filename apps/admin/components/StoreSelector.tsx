@@ -50,8 +50,6 @@ const StoreSelector = () => {
     setIsCreateModalOpen(true)
   }
 
-  console.log('Rendering with Selected Store:', selectedStore)
-
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>

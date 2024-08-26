@@ -41,24 +41,19 @@ SELECT
                     LEFT JOIN product_variant_options pvo ON vo.id = pvo.variant_option_id
                     LEFT JOIN variants v ON vo.variant_id = v.id
                     WHERE pvo.product_variant_id = pv.id
-                )
+                ),
+                'images', COALESCE(
+                    (
+                      SELECT json_agg(i.image_id)
+                      FROM product_variant_images pvi
+                      JOIN images i ON i.id = pvi.image_id
+                      WHERE pvi.product_variant_id = pv.id
+                    ),
+                    '[]'::json
+                  )
             )
         ) FILTER (WHERE pv.id IS NOT NULL), '[]'
     ) AS product_variants,
-    COALESCE(
-        JSON_AGG(
-            jsonb_build_object('product_variant_id', pv.id) || 
-            COALESCE(
-                (SELECT jsonb_object_agg(v.id, vo.id)
-                 FROM variant_options vo
-                 LEFT JOIN product_variant_options pvo ON vo.id = pvo.variant_option_id
-                 LEFT JOIN variants v ON vo.variant_id = v.id
-                 WHERE pvo.product_variant_id = pv.id),
-                '{}'::jsonb
-            )
-        ) FILTER (WHERE pv.id IS NOT NULL),
-        '[]'
-    ) AS available_combinations,
     COALESCE(
         (SELECT 
             JSON_AGG(
@@ -115,19 +110,18 @@ type GetProductParams struct {
 }
 
 type GetProductRow struct {
-	ProductID             string          `json:"product_id"`
-	ProductName           string          `json:"product_name"`
-	ProductDescription    pgtype.Text     `json:"product_description"`
-	Rating                pgtype.Float8   `json:"rating"`
-	IsFeatured            pgtype.Bool     `json:"is_featured"`
-	IsArchived            pgtype.Bool     `json:"is_archived"`
-	HasVariants           pgtype.Bool     `json:"has_variants"`
-	CategoryID            string          `json:"category_id"`
-	StoreID               string          `json:"store_id"`
-	VariantsOrder         json.RawMessage `json:"variants_order"`
-	ProductVariants       interface{}     `json:"product_variants"`
-	AvailableCombinations interface{}     `json:"available_combinations"`
-	Variants              interface{}     `json:"variants"`
+	ProductID          string          `json:"product_id"`
+	ProductName        string          `json:"product_name"`
+	ProductDescription pgtype.Text     `json:"product_description"`
+	Rating             pgtype.Float8   `json:"rating"`
+	IsFeatured         pgtype.Bool     `json:"is_featured"`
+	IsArchived         pgtype.Bool     `json:"is_archived"`
+	HasVariants        pgtype.Bool     `json:"has_variants"`
+	CategoryID         string          `json:"category_id"`
+	StoreID            string          `json:"store_id"`
+	VariantsOrder      json.RawMessage `json:"variants_order"`
+	ProductVariants    interface{}     `json:"product_variants"`
+	Variants           interface{}     `json:"variants"`
 }
 
 func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (GetProductRow, error) {
@@ -145,7 +139,6 @@ func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (GetProd
 		&i.StoreID,
 		&i.VariantsOrder,
 		&i.ProductVariants,
-		&i.AvailableCombinations,
 		&i.Variants,
 	)
 	return i, err

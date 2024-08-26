@@ -23,12 +23,14 @@ type VariantUsecase interface {
 type variantUseCase struct {
 	variantRepo domain.VariantRepository
 	storeRepo   domain.StoreRepository
+	imageRepo   domain.ImageRepository
 }
 
-func NewVariantUseCase(variantRepo domain.VariantRepository, storeRepo domain.StoreRepository) VariantUsecase {
+func NewVariantUseCase(variantRepo domain.VariantRepository, storeRepo domain.StoreRepository, imageRepo domain.ImageRepository) VariantUsecase {
 	return &variantUseCase{
 		variantRepo: variantRepo,
 		storeRepo:   storeRepo,
+		imageRepo:   imageRepo,
 	}
 }
 
@@ -72,7 +74,18 @@ func (v *variantUseCase) CreateVariant(ctx context.Context, req request.CreateVa
 		}
 
 		if option.ImageId != nil {
-			newOption.ImageID = pgtype.Text{String: *option.ImageId, Valid: true}
+
+			image, err := v.imageRepo.CreateImage(ctx, db.CreateImageParams{
+				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				Title:     pgtype.Text{String: *option.ImageId, Valid: true},
+				ImageID:   *option.ImageId,
+			})
+			if err != nil {
+				return "", fmt.Errorf("failed to create image: %w", err)
+			}
+
+			newOption.ImageID = image.ID
 		}
 		if option.Data != nil {
 			newOption.Data = pgtype.Text{String: *option.Data, Valid: true}
@@ -114,21 +127,42 @@ func (v *variantUseCase) UpdateVariant(ctx context.Context, id string, req reque
 
 	// Update or create variant options
 	for _, option := range req.Options {
+		// Delete the already existing image
 		if option.ID != nil {
+			image, err := v.imageRepo.CreateImage(ctx, db.CreateImageParams{
+				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				Title:     pgtype.Text{String: *option.ImageId, Valid: true},
+				ImageID:   *option.ImageId,
+			})
+			if err != nil {
+				return db.Variant{}, fmt.Errorf("failed to get image: %w", err)
+			}
+
 			// Update existing option
 			updateOptionParams := db.UpdateVariantOptionParams{
 				ID:           *option.ID,
 				UpdatedAt:    pgtype.Timestamp{Time: time.Now(), Valid: true},
 				Value:        *option.Value,
 				DisplayOrder: *option.DisplayOrder,
-				ImageID:      pgtype.Text{String: *option.ImageId, Valid: option.ImageId != nil},
+				ImageID:      image.ID,
 				Data:         pgtype.Text{String: *option.Data, Valid: option.Data != nil},
 			}
-			_, err := v.variantRepo.UpdateVariantOption(ctx, updateOptionParams)
+			_, err = v.variantRepo.UpdateVariantOption(ctx, updateOptionParams)
 			if err != nil {
 				return db.Variant{}, fmt.Errorf("failed to update variant option: %w", err)
 			}
 		} else {
+			image, err := v.imageRepo.CreateImage(ctx, db.CreateImageParams{
+				CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+				Title:     pgtype.Text{String: *option.ImageId, Valid: true},
+				ImageID:   *option.ImageId,
+			})
+			if err != nil {
+				return db.Variant{}, fmt.Errorf("failed to get image: %w", err)
+			}
+
 			// Create new option
 			newOptionID, _ := utils.GenerateShortID()
 			createOptionParams := db.CreateVariantOptionParams{
@@ -138,10 +172,10 @@ func (v *variantUseCase) UpdateVariant(ctx context.Context, id string, req reque
 				VariantID:    id,
 				Value:        *option.Value,
 				DisplayOrder: *option.DisplayOrder,
-				ImageID:      pgtype.Text{String: *option.ImageId, Valid: option.ImageId != nil},
+				ImageID:      image.ID,
 				Data:         pgtype.Text{String: *option.Data, Valid: option.Data != nil},
 			}
-			_, err := v.variantRepo.CreateVariantOption(ctx, createOptionParams)
+			_, err = v.variantRepo.CreateVariantOption(ctx, createOptionParams)
 			if err != nil {
 				return db.Variant{}, fmt.Errorf("failed to create new variant option: %w", err)
 			}

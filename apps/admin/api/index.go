@@ -29,12 +29,13 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	categoryRepository := domain.NewCategoryRepository(db.NewDbStore(initializers.DbConnection))
 	variantRepository := domain.NewVariantRepository(db.NewDbStore(initializers.DbConnection))
 	productRepository := domain.NewProductRepository(db.NewDbStore(initializers.DbConnection))
+	imageRepository := domain.NewImageRepository(db.NewDbStore(initializers.DbConnection))
 
 	userHandler := handlers.NewUserHandler(usecase.NewUserUseCase(userRepository, storeRepository))
 	storeHandler := handlers.NewStoreHandler(usecase.NewStoreUseCase(storeRepository, userRepository))
 	categoryHandler := handlers.NewCategoryHandler(usecase.NewCategoryUseCase(categoryRepository, storeRepository, variantRepository))
-	variantHandler := handlers.NewVariantHandler(usecase.NewVariantUseCase(variantRepository, storeRepository))
-	productHandler := handlers.NewProductHandler(usecase.NewProductUseCase(productRepository, storeRepository, variantRepository))
+	variantHandler := handlers.NewVariantHandler(usecase.NewVariantUseCase(variantRepository, storeRepository, imageRepository))
+	productHandler := handlers.NewProductHandler(usecase.NewProductUseCase(productRepository, storeRepository, variantRepository, imageRepository))
 
 	routes.SetupRouter(router, userHandler, productHandler, storeHandler, categoryHandler, variantHandler)
 
