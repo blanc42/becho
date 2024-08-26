@@ -127,8 +127,9 @@ export default function CategoryAddPage() {
         if (categoryId) {
             const category = categories.find(c => c.id === categoryId);
             if (category) {
-                const categoryVariants = variants.filter(v => category.variants.includes(v.id));
-                setCategoryVariants(categoryVariants);
+                const categoryVariants = category.variants.map(v => v.id)
+                const categoryVariantsFiltered = variants.filter(v => categoryVariants.includes(v.id));
+                setCategoryVariants(categoryVariantsFiltered);
             }
         } else {
             setCategoryVariants([]);
