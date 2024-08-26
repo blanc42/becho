@@ -37,7 +37,7 @@ const ProductVariantSchema = z.object({
   variant_id: z.string(),
 });
 
-export const ProductSchema = z.object({
+const ProductSchema = z.object({
   product_id: z.string(),
   product_name: z.string(),
   product_description: z.string().nullable(),
@@ -52,9 +52,9 @@ export const ProductSchema = z.object({
   variants: z.array(VariantSchema),
 });
 
-export type Product = z.infer<typeof ProductSchema>;
-export type ProductVariant = z.infer<typeof ProductVariantSchema>;
-export type Variant = z.infer<typeof VariantSchema>;
+type Product = z.infer<typeof ProductSchema>;
+type ProductVariant = z.infer<typeof ProductVariantSchema>;
+type Variant = z.infer<typeof VariantSchema>;
 
 export default function ProductPage() {
   const { product_id } = useParams();
