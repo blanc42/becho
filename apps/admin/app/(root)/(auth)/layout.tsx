@@ -2,7 +2,7 @@
 import LoadingPage from '@/components/pages/LoadingPage';
 import { useUser } from '@/lib/store/useUser';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, {  useEffect, useState } from 'react';
 
 export default function AuthLayout({
   children,
@@ -25,6 +25,8 @@ export default function AuthLayout({
   if (loading) {
     return <LoadingPage />
   }
+
+  console.log("I am form the auth layout")
 
   return (
     <div className="flex min-h-screen  flex-col items-center justify-center">

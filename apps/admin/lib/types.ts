@@ -53,12 +53,12 @@ const ItemSchema = z.object({
 const ProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  // category_id: z.string().min(1, "Category is required"),
-  has_variants: z.boolean(),
+  category_id: z.string().min(1, "Category is required"),
+  // has_variants: z.boolean(),
   is_archived: z.boolean(),
   // variants: z.array(z.string()),
   is_featured: z.boolean(),
-  // items: z.array(ItemSchema),
+  items: z.array(ItemSchema),
 });
 
 type ProductFormValues = z.infer<typeof ProductSchema>
@@ -66,3 +66,22 @@ type ProductFormValues = z.infer<typeof ProductSchema>
 
 export type { ProductFormValues }
 export { ProductSchema }
+
+interface ProductVariant {
+  id: string;
+  sku: string;
+  price: number;
+  quantity: number;
+  images : string[];
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  is_featured: boolean;
+  is_archived: boolean;
+  has_variants: boolean;
+  category_name: string;
+  product_variants: ProductVariant[];
+}

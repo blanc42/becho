@@ -5,25 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from 'next/navigation';
+import { Product } from '@/lib/types';
 
-interface ProductVariant {
-  id: string;
-  sku: string;
-  price: number;
-  quantity: number;
-  images : string[];
-}
 
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  is_featured: boolean;
-  is_archived: boolean;
-  has_variants: boolean;
-  category_name: string;
-  product_variants: ProductVariant[];
-}
 
 interface ProductTableProps {
   products: Product[];

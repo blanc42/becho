@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export interface User {
+  id: string
+  username: string
+  email: string
+  role: string
+  stores: Store[]
+}
+
+interface Store {
+  id: string
+  name: string
+}
+
 export const createCategorySchema = z.object({
   name: z.string().min(2, 'Category Name is required'),
   description: z.string().optional(),

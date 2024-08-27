@@ -13,8 +13,8 @@ const Home = () => {
   useEffect(() => {
     if (user && user?.stores?.length === 0) {
       onOpen();
-      console.log(user)
-    } else if (user && user?.stores?.length > 0) {
+      console.log("user has no stores")
+    }else {
       router.push("/dashboard")
     }
   }, [user]);

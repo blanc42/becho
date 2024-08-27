@@ -1,11 +1,11 @@
 "use client"
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { useStoreData } from "@/lib/store/useStoreData";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, PlusIcon, PlusSquareIcon, Trash2 } from 'lucide-react';
+import { Edit, PlusSquareIcon, Trash2 } from 'lucide-react';
+import useSWR from 'swr';
 
 interface Option {
   id: string;
@@ -21,32 +21,23 @@ interface Variant {
   options: Option[];
 }
 
+const fetcher = async (url: string) => {
+  const response = await fetch(url, {
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch variants');
+  }
+  return response.json();
+};
+
 export default function VariantsPage() {
-  const [variants, setVariants] = useState<Variant[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { selectedStore } = useStoreData();
 
-  useEffect(() => {
-    setIsLoading(true);
-    const fetchVariants = async () => {
-      if (selectedStore) {
-        try {
-          const response = await fetch(`/api/v1/stores/${selectedStore.id}/variants`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch variants');
-          }
-          const data = await response.json();
-          setVariants(data);
-        } catch (error) {
-          console.error('Error fetching variants:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchVariants();
-  }, [selectedStore]);
+  const { data: variants, error, isLoading } = useSWR<Variant[]>(
+    selectedStore ? `/api/v1/stores/${selectedStore.id}/variants` : null,
+    fetcher
+  );
 
   return (
     <div className="container max-w-screen-xl">
@@ -81,7 +72,11 @@ export default function VariantsPage() {
               ))}
             </TableBody>
           </Table>
-        ) : variants.length > 0 ? (
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="text-lg text-red-500">Error loading variants. Please try again later.</p>
+          </div>
+        ) : variants && variants.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>

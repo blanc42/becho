@@ -1,23 +1,12 @@
 import { create } from 'zustand'
 import { useStoreData } from './useStoreData'
+import { User } from '../schema'
 
-interface User {
-  id: string
-  username: string
-  email: string
-  role: string
-  stores: Store[]
-}
-
-interface Store {
-  id: string
-  name: string
-}
 
 interface UserState {
   user: User | null
   setUser: (user: User) => void
-  fetchUser: () => Promise<User>
+  fetchUser: (url: string) => Promise<User>
 }
 
 export const useUser = create<UserState>((set, get) => ({
@@ -27,26 +16,21 @@ export const useUser = create<UserState>((set, get) => ({
     const { setStores } = useStoreData.getState()
     setStores(user.stores)
   },
-  fetchUser: async () => {
-    try {
-      const response = await fetch('/api/v1/user', {
+  fetchUser: async (url: string) => {
+      const response = await fetch(url, {
         credentials: 'include',
-      })
-      if (!response.ok) {
-        console.log(response)
-        throw new Error('Failed to fetch user')
+      });
+      if (response.status === 401) {
+        throw new Error('Unauthorized');
       }
-      const res = await response.json()
-      set({ user : res.data })
-      const { setStores } = useStoreData.getState()
-      setStores(res.data.stores)
-
-      return res.data
-    } catch (error) {
-      console.error('Error fetching user:', error)
-      // Handle error (e.g., show error message to user)
-    } finally {
-      console.log("finished fetching user")
-    }
+      if (!response.ok) {
+        throw new Error('An error occurred while fetching the data.');
+      }
+      const data: { data: User } = await response.json();
+      console.log("data", data)
+      set({ user: data.data });
+      const { setStores } = useStoreData.getState();
+      setStores(data.data.stores);
+      return data.data;
   },
 }))
