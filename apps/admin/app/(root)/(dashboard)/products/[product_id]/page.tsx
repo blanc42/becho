@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { z } from 'zod';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { useStoreData } from '@/lib/store/useStoreData';
+import useSWR from 'swr';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const VariantOptionSchema = z.object({
   data: z.string(),
@@ -52,11 +54,10 @@ type Product = z.infer<typeof ProductSchema>;
 type ProductVariant = z.infer<typeof ProductVariantSchema>;
 type Variant = z.infer<typeof VariantSchema>;
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function ProductPage() {
   const { product_id } = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { selectedStore } = useStoreData();
@@ -64,46 +65,29 @@ export default function ProductPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
 
+  const { data: product, error } = useSWR<Product>(
+    selectedStore ? `/api/v1/stores/${selectedStore.id}/products/${product_id}` : null,
+    fetcher
+  );
+
   useEffect(() => {
-    async function fetchProduct() {
-      setIsLoading(true);
-      try {
-        if(selectedStore) {
-          const res = await fetch(`/api/v1/stores/${selectedStore.id}/products/${product_id}`);
-          if (!res.ok) {
-            throw new Error('Failed to fetch product');
-          }
-          const data = await res.json();
-          const validatedData = ProductSchema.parse(data);
-          setProduct(validatedData);
-          
-          // Initialize selected options with the first option of each variant
-          const initialSelectedOptions: Record<string, string> = {};
-          validatedData.variants.forEach(variant => {
-            initialSelectedOptions[variant.name] = variant.options[0].value;
-          });
+    if (product) {
+      // Initialize selected options with the first option of each variant
+      const initialSelectedOptions: Record<string, string> = {};
+      product.variants.forEach(variant => {
+        initialSelectedOptions[variant.name] = variant.options[0].value;
+      });
 
-          setSelectedOptions(initialSelectedOptions);
-          updateAvailableOptions(validatedData, initialSelectedOptions);
+      setSelectedOptions(initialSelectedOptions);
+      updateAvailableOptions(product, initialSelectedOptions);
 
-          // Find the selected variant based on initial options
-          const initialVariant = validatedData.product_variants.find(v => 
-            Object.entries(initialSelectedOptions).every(([key, value]) => v.options[key] === value)
-          );
-          setSelectedVariant(initialVariant || null);
-
-          console.log('Fetched product data:', validatedData);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        console.error('Error fetching product:', err);
-      } finally {
-        setIsLoading(false);
-      }
+      // Find the selected variant based on initial options
+      const initialVariant = product.product_variants.find(v => 
+        Object.entries(initialSelectedOptions).every(([key, value]) => v.options[key] === value)
+      );
+      setSelectedVariant(initialVariant || null);
     }
-
-    fetchProduct();
-  }, [product_id, selectedStore]);
+  }, [product]);
 
   const updateAvailableOptions = (product: Product, currentSelections: Record<string, string>) => {
     const newAvailableOptions: Record<string, string[]> = {};
@@ -163,17 +147,43 @@ export default function ProductPage() {
     setSelectedVariant(newVariant || null);
   };
 
-  if (isLoading) {
-    return <div className="text-center py-10">Loading...</div>;
-  }
-
   if (error) {
-    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
+    return <div className="text-center py-10 text-red-500">Error: {error.message}</div>;
   }
 
   if (!product) {
-    return <div className="text-center py-10">Product not found</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-wrap -mx-4">
+          <div className="w-full md:w-1/2 px-4 mb-8">
+            <Skeleton className="w-full h-[300px] rounded-lg" />
+            <div className="flex justify-center mt-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="w-16 h-16 mx-1 rounded-md" />
+              ))}
+            </div>
+          </div>
+          <div className="w-full md:w-1/2 px-4">
+            <Skeleton className="h-8 w-3/4 mb-4" />
+            <Skeleton className="h-4 w-full mb-6" />
+            <Skeleton className="h-6 w-1/4 mb-4" />
+            <Skeleton className="h-10 w-1/2 mb-6" />
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="mb-4">
+                <Skeleton className="h-6 w-1/4 mb-2" />
+                <div className="flex flex-wrap gap-2">
+                  {[...Array(4)].map((_, j) => (
+                    <Skeleton key={j} className="h-10 w-20" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-wrap -mx-4">
