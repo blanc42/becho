@@ -51,31 +51,31 @@ SELECT
                 ORDER BY gv.ord
             )
          FROM (
-             SELECT
-                 v.id AS variant_id,
-                 v.name AS variant_name,
-                 JSON_AGG(
-                     JSON_BUILD_OBJECT(
-                         'id', vo.id,
-                         'value', vo.value,
-                         'data', vo.data
-                     )
-                 ) AS options,
-                 idx.ord
-             FROM
-                 variants v
-             LEFT JOIN variant_options vo ON v.id = vo.variant_id
-             LEFT JOIN product_variant_options pvo ON vo.id = pvo.variant_option_id
-             LEFT JOIN product_variants pv_inner ON pvo.product_variant_id = pv_inner.id
-             LEFT JOIN LATERAL (
-                 SELECT ordinality AS ord
-                 FROM jsonb_array_elements_text(p.variants) WITH ORDINALITY
-                 WHERE value = v.id::text
-             ) idx ON true
-             WHERE
-                 pv_inner.product_id = p.id
-             GROUP BY
-                 v.id, v.name, idx.ord
+                            SELECT 
+                    subquery.id AS variant_id,
+                    subquery.name AS variant_name,
+                    JSONB_AGG(DISTINCT jsonb_build_object(
+                        'id', subquery.id,
+                        'value', subquery.value,
+                        'data', subquery.data
+                    )) AS options,
+                    idx.ord
+                FROM (
+                    SELECT DISTINCT ON (v.id, vo.id, vo.value, vo.data)
+                        pv.id AS pv_id, v.id, v.name, vo.id AS vo_id, vo.value, vo.data
+                    FROM product_variants pv
+                    LEFT JOIN product_variant_options pvo ON pv.id = pvo.product_variant_id
+                    LEFT JOIN variant_options vo ON pvo.variant_option_id = vo.id
+                    LEFT JOIN variants v ON v.id = vo.variant_id
+                    WHERE pv.product_id = p.id
+                ) subquery
+                LEFT JOIN LATERAL (
+                    SELECT ordinality AS ord
+                    FROM jsonb_array_elements_text(p.variants) WITH ORDINALITY
+                    WHERE value = subquery.id::text
+                ) idx ON true
+                GROUP BY
+                subquery.id, subquery.name, idx.ord
          ) gv
         ),
         '[]'::JSON
