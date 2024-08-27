@@ -126,16 +126,16 @@ func (u *productUseCase) CreateProduct(ctx context.Context, product request.Crea
 	}
 
 	newProduct, err := u.productRepo.CreateProduct(ctx, db.CreateProductParams{
-		ID:          id,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
-		Name:        product.Name,
-		IsFeatured:  pgtype.Bool{Bool: product.IsFeatured, Valid: true},
-		IsArchived:  pgtype.Bool{Bool: false, Valid: true},
-		HasVariants: pgtype.Bool{Bool: product.HasVariants, Valid: true},
-		CategoryID:  product.CategoryID,
-		Variants:    variantsJSON,
-		StoreID:     product.StoreID,
+		ID:         id,
+		CreatedAt:  createdAt,
+		UpdatedAt:  updatedAt,
+		Name:       product.Name,
+		IsFeatured: pgtype.Bool{Bool: product.IsFeatured, Valid: true},
+		IsArchived: pgtype.Bool{Bool: false, Valid: true},
+		// HasVariants: pgtype.Bool{Bool: product.HasVariants, Valid: true},
+		CategoryID: product.CategoryID,
+		Variants:   variantsJSON,
+		StoreID:    product.StoreID,
 	})
 	if err != nil {
 		return db.GetProductRow{}, fmt.Errorf("failed to create product: %w", err)

@@ -25,7 +25,6 @@ import { useStoreData } from '@/lib/store/useStoreData';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import LoadingPage from '@/components/pages/LoadingPage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import UploadImage from '@/components/UploadImage';
 

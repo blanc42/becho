@@ -3,10 +3,9 @@ package request
 type CreateProductRequest struct {
 	Name        string                        `json:"name" binding:"required"`
 	Description *string                       `json:"description"`
-	IsFeatured  bool                          `json:"is_featured" binding:"required"`
-	IsArchived  bool                          `json:"is_archived"`
-	HasVariants bool                          `json:"has_variants"` // redundant
-	CategoryID  string                        `json:"category_id" binding:"required"`
+	IsFeatured  bool                          `json:"is_featured"`                    // has to remove the binding since gin binding is causing troubles
+	IsArchived  bool                          `json:"is_archived"`                    // has to remove the binding since gin binding is causing troubles
+	CategoryID  string                        `json:"category_id" binding:"required"` // TODO: make the category optional
 	StoreID     string                        `json:"store_id"`
 	Variants    []string                      `json:"variants"`
 	Items       []CreateProductVariantRequest `json:"items"`
