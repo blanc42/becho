@@ -20,6 +20,7 @@ export const useStoreData = create<StoreState>((set) => ({
   setStores: (stores) => {
     set({ stores })
     if (stores.length > 0) {
+      console.log("we are running inside the setStores logic")
       console.log('stores', stores)
       const storedStoreId = localStorage.getItem('selectedStoreId')
       const selectedStore = storedStoreId 

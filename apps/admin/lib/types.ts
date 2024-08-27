@@ -81,7 +81,6 @@ export interface Product {
   description: string | null;
   is_featured: boolean;
   is_archived: boolean;
-  has_variants: boolean;
   category_name: string;
   product_variants: ProductVariant[];
 }

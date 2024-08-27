@@ -90,7 +90,7 @@ func (h *productHandler) GetProducts(c *gin.Context) {
 		return
 	}
 
-	limitStr := c.DefaultQuery("limit", "10")
+	limitStr := c.DefaultQuery("limit", "25")
 	offsetStr := c.DefaultQuery("offset", "0")
 
 	limit, err := strconv.ParseInt(limitStr, 10, 32)

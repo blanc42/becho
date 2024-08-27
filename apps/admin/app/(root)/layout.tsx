@@ -21,7 +21,7 @@ export default function MainLayout({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const fetchedUser = await fetchUser('api/v1/user')
+        const fetchedUser = await fetchUser('/api/v1/user')
         if (!fetchedUser) {
           console.log("redirecting to login since user is not logged in")
           router.push("/login")
