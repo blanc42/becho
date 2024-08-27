@@ -133,9 +133,17 @@ export function SignupForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Signing up...' : 'Sign up'}
-        </Button>
+        <div className='flex flex-col space-y-4'>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Signing up...' : 'Sign up'}
+          </Button>
+          <div className='flex items-center justify-center space-x-2'>
+            <span className='text-sm text-gray-500'>Already have an account?</span>
+            <Button type="button" onClick={() => router.push('/login')} variant='link' className='p-0'>
+              Log in
+            </Button>
+          </div>
+        </div>
       </form>
     </Form>
   );

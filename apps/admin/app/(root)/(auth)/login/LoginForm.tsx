@@ -30,8 +30,8 @@ export function LoginForm() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'test@test.com',
+      password: 'test1234',
     },
   });
 
@@ -94,12 +94,16 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <div className='flex space-x-4'>
-
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Logging in...' : 'Log in'}
-        </Button>
-        <Button onClick={() => router.push('/signup')} variant={'outline'}>Sign up</Button>
+        <div className='flex flex-col space-y-4'>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Logging in...' : 'Log in'}
+          </Button>
+          <div className='flex items-center justify-center space-x-2'>
+            <span className='text-sm text-gray-500'>Don't have an account?</span>
+            <Button type="button" onClick={() => router.push('/signup')} variant='link' className='p-0'>
+              Sign up
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

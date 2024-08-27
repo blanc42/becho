@@ -7,7 +7,7 @@ export default function LoginPage() {
       <h2 className="mt-6 text-3xl font-extrabold text-center">
         Log in to your account
       </h2>
-      <Link href={'/products'}>products</Link>
+      <div className="text-sm -mt-4 text-gray-500 text-center">Test credentials are already filled</div>
       <LoginForm />
     </>
   );
