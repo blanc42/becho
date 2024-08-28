@@ -291,7 +291,7 @@ export default function AddProductPage() {
 
   const handleAddCombination = useCallback((combination: Record<string, string>) => {
     const newItem = {
-      sku: Object.values(combination).join('-'),
+      sku: generateSKU(),
       quantity: 0,
       price: 0,
       cost_price: 0,
