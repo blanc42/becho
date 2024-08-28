@@ -40,10 +40,10 @@ export default function VariantsPage() {
   );
 
   return (
-    <div className="container max-w-screen-xl">
-      <div className="flex items-baseline justify-between my-12">
+    <div className="container max-w-screen-xl px-2">
+      <div className="flex items-baseline justify-between mb-8">
         <h1 className="text-3xl font-semibold">Variants</h1>
-        <Button asChild>
+        <Button size='sm' asChild>
           <Link href="/variants/add" className='flex items-center gap-2'>
             <PlusSquareIcon width={16} height={16} />
             Add Variant 

@@ -55,6 +55,7 @@ const TagCloseButton = React.forwardRef<HTMLButtonElement, TagCloseButtonProps>(
       <button
         ref={ref}
         className={cn(
+          "ml-1 hover:bg-gray-300 flex items-center justify-center",
           "rounded-sm p-0.5 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300",
           size === "sm" ? "h-4 w-4" : 
           size === "md" ? "h-5 w-5" : 

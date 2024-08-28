@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useUser } from '@/lib/store/useUser';
+import { toast } from '@/components/ui/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -24,7 +25,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const {setUser} = useUser()
+  const {user, setUser} = useUser()
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const form = useForm<LoginFormValues>({
@@ -35,9 +36,15 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    if (user) {
+      console.log("User is logged in, redirecting to dashboard");
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
   function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
-    // Post form data to /api/v1/login
     fetch('/api/v1/login', {
       method: 'POST',
       headers: {
@@ -55,10 +62,14 @@ export function LoginForm() {
         setUser(res.data)
         console.log('Login successful:', res);
         router.push('/dashboard');
+        toast({
+          title: 'pushed to dashboard',
+          description: res.data.email,
+        });
       })
       .catch(error => {
         console.error('Error:', error);
-        // Handle error (e.g., show error message to user)
+        alert(error.message || 'An error occurred while logging in.');
       })
       .finally(() => {
         setIsLoading(false);

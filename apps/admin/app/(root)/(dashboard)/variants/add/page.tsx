@@ -83,8 +83,8 @@ export default function AddVariant() {
   }
 
   return (
-    <div className='flex flex-col items-center justify-center mt-12 max-w-2xl mx-auto'>
-      <div className='flex items-baseline justify-between mb-6 border-b border-gray-600 py-4 w-full'>
+    <div className='flex flex-col items-center max-w-2xl mx-auto'>
+      <div className='flex items-baseline justify-between mb-8 border-b border-gray-600 py-4 w-full'>
         <h1 className="text-3xl font-semibold">Add Variant</h1>
         <Button asChild size="sm">
           <Link href="/variants" className='flex items-center gap-2'>

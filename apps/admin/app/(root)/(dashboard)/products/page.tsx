@@ -35,8 +35,8 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="container max-w-screen-xl">
-      <div className="flex justify-between items-center my-12">
+    <div className="container max-w-screen-xl px-0">
+      <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">Products</h1>
         <Button asChild>
           <Link href="/products/add">

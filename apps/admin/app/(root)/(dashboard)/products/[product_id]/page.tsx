@@ -62,7 +62,6 @@ export default function ProductPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { selectedStore } = useStoreData();
   const [availableOptions, setAvailableOptions] = useState<Record<string, string[]>>({});
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
 
   const { data: product, error } = useSWR<Product>(

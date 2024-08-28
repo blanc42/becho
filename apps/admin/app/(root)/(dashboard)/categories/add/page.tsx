@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,9 +20,10 @@ import VariantMultiSelector from '@/components/VariantMultiSelector';
 import { createCategorySchema, CreateCategoryType } from '@/lib/schema';
 import { Category, Variant } from '@/lib/types';
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, MoveLeftIcon, X } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
+import Link from 'next/link';
 
 export default function CategoryAddPage() {
     const [selectedVariants, setSelectedVariants] = useState<Variant[]>([]);
@@ -92,7 +93,7 @@ export default function CategoryAddPage() {
                     }),
                     credentials: 'include'
                 });
-    
+
                 if (!response.ok) {
                     throw new Error('Failed to create category');
                 }
@@ -143,12 +144,14 @@ export default function CategoryAddPage() {
 
     return (
         <div className="space-y-6 max-w-screen-lg w-full mx-auto">
-            <div className="flex items-center justify-between my-10">
-            <h1 className="text-2xl md:text-3xl font-bold">Create Category</h1>
-            <Button size="sm" onClick={() => router.back()}>
-                <ArrowLeft className="w-4 h-4" />
-                Back
-            </Button>
+            <div className='flex items-baseline justify-between mb-8 border-b border-gray-600 py-4 w-full'>
+                <h1 className="text-3xl font-semibold">Add Category</h1>
+                <Button asChild size="sm">
+                    <Link href="/categories" className='flex items-center gap-2'>
+                        <MoveLeftIcon width={16} height={16} />
+                        Back
+                    </Link>
+                </Button>
             </div>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -201,9 +204,9 @@ export default function CategoryAddPage() {
                             <FormItem>
                                 <FormLabel>Parent Category</FormLabel>
                                 <FormControl className='w-full'>
-                                    <CategoryTree 
-                                        categories={categories} 
-                                        value={field.value} 
+                                    <CategoryTree
+                                        categories={categories}
+                                        value={field.value}
                                         onChange={(value) => handleCategorySelect(value)}
                                     />
                                 </FormControl>
@@ -242,8 +245,8 @@ export default function CategoryAddPage() {
                             {selectedVariants.map(variant => (
                                 <Badge key={variant.id} variant="secondary" className="flex items-center gap-1">
                                     {variant.name}
-                                    <X 
-                                        className="h-3 w-3 cursor-pointer" 
+                                    <X
+                                        className="h-3 w-3 cursor-pointer"
                                         onClick={() => removeSelectedVariant(variant.id)}
                                     />
                                 </Badge>

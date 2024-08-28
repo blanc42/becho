@@ -233,6 +233,10 @@ export default function AddProductPage() {
     }
   };
 
+  const handleDeleteVariant = (variantId: string) => {
+    setSelectedVariants(selectedVariants.filter((v) => v.id !== variantId)); ``
+  };
+
   const cleanUpItemsAfterVariantRemoval = (removedVariantId: string) => {
     const currentItems = form.getValues('items');
     const updatedItems = currentItems.map(item => {
@@ -506,6 +510,17 @@ export default function AddProductPage() {
                 </FormItem>
               )}
             />
+            <div className=' flex flex-col'>
+              <h2>Selected Variants</h2>
+              <div className="flex flex-wrap gap-2 mb-4 border border-gray-200 rounded-md p-2 max-w-[500px] min-h-24">
+                {selectedVariants.map((variant) => (
+                  <Tag key={variant.id} variant="default" size="md" className="cursor-pointer hover:bg-gray-200">
+                    <TagLabel>{variant.name}</TagLabel>
+                    <TagCloseButton onClick={() => handleDeleteVariant(variant.id)} />
+                  </Tag>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div>
@@ -629,9 +644,9 @@ export default function AddProductPage() {
                   {
                     !setAllPrices && (
                       <>
-                      <div>Cost Price</div>
-                      <div>Price</div>
-                      <div>Discounted Price</div>
+                        <div>Cost Price</div>
+                        <div>Price</div>
+                        <div>Discounted Price</div>
                       </>
                     )
                   }
@@ -677,73 +692,73 @@ export default function AddProductPage() {
 
                     {
                       !setAllPrices && (
-                          <>
+                        <>
                           <FormField
-                      control={form.control}
-                      name={`items.${index}.cost_price`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
-                              onFocus={e => e.target.select()}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`items.${index}.price`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
-                              onFocus={e => e.target.select()}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`items.${index}.discounted_price`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
-                              onFocus={e => e.target.select()}
-                            />
-                          </FormControl>
-                        </FormItem>
-                          )}
-                        />
-                      </>
-                    )
+                            control={form.control}
+                            name={`items.${index}.cost_price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                                    onFocus={e => e.target.select()}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                                    onFocus={e => e.target.select()}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.discounted_price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={e => field.onChange(e.target.value === '' ? '' : +e.target.value)}
+                                    onFocus={e => e.target.select()}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )
                     }
                     <FormField
                       control={form.control}
                       name={`items.${index}.images`}
                       render={({ field }) => (
                         <div className="flex gap-2">
-                              <FormItem>
-                                <FormControl>
-                                  <UploadImage
-                                    images={field.value || []}
-                                    maxImages={5}
-                                    setImages={field.onChange}
-                                    variant='small'
-                                  />
-                                </FormControl>
-                              </FormItem>
+                          <FormItem>
+                            <FormControl>
+                              <UploadImage
+                                images={field.value || []}
+                                maxImages={5}
+                                setImages={field.onChange}
+                                variant='small'
+                              />
+                            </FormControl>
+                          </FormItem>
                           <div className="flex flex-row gap-1">
                             {field.value?.slice(0, 3).map((imageId, index) => (
                               <img

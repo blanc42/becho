@@ -46,12 +46,12 @@ export default function MainLayout({
     fetchData()
   }, [])
 
+
+
   if (isLoading) {
     return <LoadingPage />
   }
-
-
-
+  
   return <>
     <CreateStoreModal isOpen={isOpen} onClose={onClose} />
       {children}

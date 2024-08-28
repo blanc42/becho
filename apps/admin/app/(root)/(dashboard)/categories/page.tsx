@@ -33,7 +33,7 @@ export default function CategoriesPage() {
   );
 
   return (
-    <div className="container max-w-screen-xl">
+    <div className="container max-w-screen-xl px-2">
       <div className="flex items-baseline justify-between my-12">
         <h1 className="text-3xl font-semibold">Categories</h1>
         <Button asChild>
