@@ -117,10 +117,10 @@ export default function AddProductPage() {
         console.log(json);
         toast({
           title: 'Product created',
-          description: `Product ${json.id} created successfully`,
+          description: `Product created successfully`,
         });
+        router.push(`/products/${json.product_id}`);
       }
-      router.push(`/products`);
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({

@@ -68,13 +68,10 @@ type Address struct {
 }
 
 type Cart struct {
-	ID                   string           `json:"id"`
-	CreatedAt            pgtype.Timestamp `json:"created_at"`
-	UpdatedAt            pgtype.Timestamp `json:"updated_at"`
-	CustomerID           string           `json:"customer_id"`
-	TotalPrice           float64          `json:"total_price"`
-	TotalDiscountedPrice pgtype.Float8    `json:"total_discounted_price"`
-	TotalQuantity        int32            `json:"total_quantity"`
+	ID        string           `json:"id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	UserID    string           `json:"user_id"`
 }
 
 type CartItem struct {
@@ -83,7 +80,7 @@ type CartItem struct {
 	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
 	ProductVariantID string           `json:"product_variant_id"`
 	Quantity         int32            `json:"quantity"`
-	UserID           string           `json:"user_id"`
+	CartID           string           `json:"cart_id"`
 	StoreID          string           `json:"store_id"`
 }
 

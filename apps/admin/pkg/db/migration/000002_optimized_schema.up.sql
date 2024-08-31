@@ -203,12 +203,9 @@ CREATE TABLE IF NOT EXISTS carts (
     id CHAR(11) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    customer_id CHAR(11) NOT NULL,
-    total_price FLOAT NOT NULL,
-    total_discounted_price FLOAT,
-    total_quantity INTEGER NOT NULL,
-    CONSTRAINT fk_cart_customer
-        FOREIGN KEY (customer_id) 
+    user_id CHAR(11) NOT NULL,
+    CONSTRAINT fk_cart_user
+        FOREIGN KEY (user_od) 
         REFERENCES users(id)
 );
 

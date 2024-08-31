@@ -1,23 +1,31 @@
+-- name: CreateCart :one
+INSERT INTO carts (id, user_id )
+VALUES ($1, $2)
+RETURNING *;
 
--- Cart Items
+-- name: GetCart :one
+SELECT * FROM carts
+WHERE id = $1 LIMIT 1;
+
+-- name: DeleteCart :exec
+DELETE FROM carts
+WHERE id = $1;
+
+-- name: ListCarts :many
+SELECT * FROM carts
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
 -- name: CreateCartItem :one
-INSERT INTO cart_items (id, created_at, updated_at, product_variant_id, quantity, user_id, store_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO cart_items (id, cart_id, product_variant_id, quantity)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetCartItem :one
-SELECT ci.*, pv.sku, pv.price, pv.discounted_price, pv.title
+SELECT ci.*
 FROM cart_items ci
-JOIN product_variants pv ON ci.product_variant_id = pv.id
 WHERE ci.id = $1 LIMIT 1;
-
--- name: ListCartItems :many
-SELECT ci.*, pv.sku, pv.price, pv.discounted_price, pv.title
-FROM cart_items ci
-JOIN product_variants pv ON ci.product_variant_id = pv.id
-WHERE ci.user_id = $1 AND ci.store_id = $2
-ORDER BY ci.created_at
-LIMIT $3 OFFSET $4;
 
 -- name: UpdateCartItem :one
 UPDATE cart_items
@@ -28,3 +36,10 @@ RETURNING *;
 -- name: DeleteCartItem :exec
 DELETE FROM cart_items
 WHERE id = $1;
+
+-- name: ListCartItems :many
+SELECT ci.*
+FROM cart_items ci
+WHERE ci.cart_id = $1
+ORDER BY ci.created_at DESC
+LIMIT $2 OFFSET $3;
